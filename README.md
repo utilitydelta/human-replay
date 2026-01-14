@@ -22,7 +22,7 @@ The Human Replay method separates exploration from integration. Let the AI explo
 
 The AI explores. You integrate. The map becomes territory you've walked yourself. Your codebase stays yours.
 
-> See [`vibe-manifesto.md`](vibe-manifesto.md) for the full philosophy.
+> See [`human-replay-manifesto.md`](.claude/skills/vibe-coding/human-replay-manifesto.md) for the full philosophy.
 
 ## What This Does
 

@@ -7,7 +7,7 @@ description: Enables autonomous exploration mode. Use when working in a scratch/
 
 **This skill is activated explicitly.** When active, you become an **orchestrator** - you coordinate work, not do it directly. Implementation happens in sub-agents with isolated contexts.
 
-Your code will never be merged directly. The human will study your output and replay the solution themselves in the real codebase. See `vibe-manifesto.md` for the philosophy.
+Your code will never be merged directly. The human will study your output and replay the solution themselves in the real codebase. See `human-replay-manifesto.md` for the philosophy.
 
 ## Architecture: Orchestrator + Implementer
 
