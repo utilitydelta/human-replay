@@ -2,27 +2,23 @@
 
 **Vibe without guilt. Replay with understanding.**
 
-## The Dream
+<img src="vibing.png" alt="Vibe coding in a sandbox" width="350" align="right">
 
 Vibe coding is intoxicating. You describe what you want, the AI builds it, you iterate at superhuman speed. In three hours, you have a working feature that would have taken two weeks.
 
 But then you look at the code. It works. Mostly. But it's not *yours*. You don't fully understand it. There are abstractions you wouldn't have chosen. There are subtle bugs hiding in components that were never tested together.
 
-You face a choice: accept the entropy, or throw it away and lose the insight.
+You face a choice: accept the entropy, or throw it away and lose the insight. **There is a third path.**
 
-**There is a third path.**
-
-## The Insight
-
-The AI's value isn't the code it writes—it's the *problems it solves* and the *approaches it discovers*.
-
-**Code is cheap. Understanding is expensive.**
+The AI's value isn't the code it writes—it's the *problems it solves* and the *approaches it discovers*. **Code is cheap. Understanding is expensive.**
 
 The Human Replay method separates exploration from integration. Let the AI explore freely in a sandbox. Then replay its discoveries with your own hands, in your own style, with your own understanding.
 
 The AI explores. You integrate. The map becomes territory you've walked yourself. Your codebase stays yours.
 
-> See [`human-replay-manifesto.md`](.claude/skills/vibe-coding/human-replay-manifesto.md) for the full philosophy.
+See [`human-replay-manifesto.md`](.claude/skills/vibe-coding/human-replay-manifesto.md) for the full philosophy.
+
+<br clear="both">
 
 ## What This Does
 
