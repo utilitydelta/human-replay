@@ -34,7 +34,7 @@ When you vibe code, you're not paying for keystrokes—you're paying for explora
 
 #### 1. The Sandbox is Sacred
 
-Never vibe code in your main repository. Create a `vibing/` folder—a parallel universe where the AI can make a mess. This code will never be merged. It exists only to be studied and discarded.
+Never vibe code in your main repository. Create a `sandbox/` folder—a parallel universe where the AI can make a mess. This code will never be merged. It exists only to be studied and discarded.
 
 Your production codebase remains untouched until *you* touch it.
 
@@ -94,7 +94,7 @@ Your replayed version should have none of this. Every line exists for a reason y
 
 #### Phase 0: Vibe Freely
 
-1. Clone your repo into a `vibing/` directory
+1. Clone your repo into a `sandbox/` directory
 2. Point the AI at the problem
 3. Let it iterate until something works
 4. Don't worry about quality—this code is disposable
@@ -229,7 +229,7 @@ Your codebase stays yours.
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐      │
-│  │   VIBING    │───▶│   TRIAGE    │───▶│   REPLAY    │      │
+│  │   SANDBOX   │───▶│   TRIAGE    │───▶│   REPLAY    │      │
 │  │   FOLDER    │    │   & PLAN    │    │   DOCUMENT  │      │
 │  └─────────────┘    └─────────────┘    └─────────────┘      │
 │        │                                      │             │

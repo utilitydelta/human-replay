@@ -22,7 +22,7 @@ See [`human-replay-manifesto.md`](.claude/skills/vibe-coding/human-replay-manife
 
 ## What This Does
 
-This repo contains pre-defined skills and agents to help you vibe-code with Claude Code. Create a sandbox, kick off your vibe coding with /vibe-coding skill, passing in your instructions or design doc.
+This repo contains pre-defined skills and agents to help you vibe-code with Claude Code. Create a sandbox, kick off your vibe coding with the /vibe-coding skill, passing in your instructions or design doc.
 
 After the LLM vibe codes a solution, use the replay-guide-generator agent to analyse the final state. It generates an **optimal rebuild path** - the route a knowledgeable pair programmer would take from the start.
 
