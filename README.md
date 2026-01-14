@@ -18,6 +18,8 @@ The AI explores. You integrate. The map becomes territory you've walked yourself
 
 See [`human-replay-manifesto.md`](.claude/skills/vibe-coding/human-replay-manifesto.md) for the full philosophy.
 
+Alternatively read me critique of brute force approaches like Ralph in [`critique-of-brute-force-ai.md`](critique-of-brute-force-ai.md)
+
 <br clear="both">
 
 ## What This Does
