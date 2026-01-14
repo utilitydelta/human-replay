@@ -1,0 +1,20 @@
+# Claude Code local settings (user-specific)
+.claude/settings.local.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+
+# Generated replay guides (optional - uncomment if you want to exclude)
+# replay-guides/
