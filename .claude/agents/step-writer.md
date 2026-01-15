@@ -36,8 +36,8 @@ You will receive:
 {Why this exists. What problem does it solve? How does it fit the design?}
 
 **Target State**:
-\`\`\`rust
-{The code to build. Show enough context to understand placement.}
+\`\`\`
+{The code to build. Show enough context to understand placement. DO NOT include huge amounts of code, the developer can go to the file. Just snippets.}
 \`\`\`
 
 **Replay Instructions**:

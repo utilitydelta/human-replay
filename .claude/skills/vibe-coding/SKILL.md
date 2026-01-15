@@ -207,8 +207,8 @@ Implement serialization/deserialization for ReplicationBatch messages.
 
 ## Context
 - Design spec: docs/s3-design.md, section 3.2 "Wire Protocol"
-- Prior work: Batch struct exists in celeriant_shard/src/batch.rs
-- Key files: celeriant_wire/src/messages.rs, celeriant_wire/src/codec.rs
+- Prior work: Batch struct exists in src/batch.rs
+- Key files: src/messages.rs, src/codec.rs
 
 ## Scope
 DO:
@@ -225,7 +225,7 @@ DO NOT:
 - Use the existing codec infrastructure
 
 ## Success Criteria
-- cargo test in celeriant_wire passes
+- unit tests in wire passes
 - New test: replication_batch_roundtrip
 ```
 
