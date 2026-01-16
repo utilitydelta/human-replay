@@ -2,13 +2,16 @@
 
 ## The Scorched Earth Approach to Software Engineering
 
-There is a growing philosophy in AI-assisted development that can be summarized as: *solve problems with LLMs at any cost*. This document examines two prominent expressions of this philosophy-Geoffrey Huntley's agent-maximalist approach and the RALPH methodology-and argues that they fundamentally devalue real engineering.
+There is a growing philosophy in AI - assisted development that can be summarized as: *solve problems with LLMs at any cost*. 
+This document examines agent maximalism and argues that they fundamentally devalue real engineering.
 
 ---
 
 ## The Agent-Maximalist Philosophy
 
 Geoffrey Huntley's [agent philosophy](https://ghuntley.com/agent/) treats AI agents as production workers to be optimized. The human becomes an orchestrator, managing context windows, selecting models, and tuning prompts. The agent writes the code that ships.
+
+Geoff does discuss 'Software Development' (which is dead) vs 'Software Engineering' (still a thing) but doesn't press the point much further than that.
 
 Key tenets:
 - Agents are "300 lines of code in a loop"-simple systems that can be mastered
@@ -28,7 +31,7 @@ The [RALPH methodology](https://ghuntley.com/ralph/) takes this further. At its 
 while :; do cat PROMPT.md | claude-code ; done
 ```
 
-Run the agent. Check if it's done. If not, run it again. Repeat until something works.
+Run the agent. Check if it's done. If not, run it again with a fresh context window. Continue working on the PRD.md until it works.
 
 Key characteristics:
 - **No human in the loop**: The system iterates autonomously until exit conditions are met
@@ -36,7 +39,7 @@ Key characteristics:
 - **No IDE**: Development happens entirely through the agent's tool calls
 - **Success measured in cost savings**: A $50,000 contract completed for $297
 
-The philosophy is explicit: failures aren't the tool's fault-they're tuning opportunities. Like a guitar, the system just needs adjustment.
+The philosophy is explicit: failures aren't the tool's fault - they're tuning opportunities. Like a guitar, the system just needs adjustment.
 
 ---
 
@@ -44,7 +47,7 @@ The philosophy is explicit: failures aren't the tool's fault-they're tuning oppo
 
 These approaches share a critical flaw: **they only work for problems that have already been solved**.
 
-LLMs are interpolators, not inventors. They recombine patterns from training data. When the solution exists in that data-when you're building another CRUD app, another REST API, another standard integration-the agent can find it.
+LLMs are interpolators, not inventors. They recombine patterns from training data. When the solution exists in that data - when you're building another CRUD app, another REST API, another standard integration - the agent can find it.
 
 But what about:
 - Writing a new database engine with novel consistency guarantees?
@@ -58,7 +61,7 @@ These problems require a human who understands deeply enough to make choices the
 
 ## The Uncomfortable Economics
 
-The agent-maximalist argument goes: AI-assisted workers will outpace manual workers. True-for commodity work.
+The agent-maximalist argument goes: AI-assisted workers will outpace manual workers. True - for commodity work.
 
 But commodity work is rapidly approaching zero value. If an agent can solve the problem, the problem isn't worth much. The valuable problems are precisely the ones agents can't solve.
 
@@ -83,11 +86,11 @@ RALPH's "faith in eventual consistency" is particularly dangerous. The methodolo
 
 Each assumption is questionable.
 
-**Convergence is not guaranteed.** Agents can oscillate, produce subtly wrong solutions that pass superficial tests, or get stuck in local minima. "Run it again" is not debugging-it's gambling.
+**Convergence is not guaranteed.** Agents can oscillate, produce subtly wrong solutions that pass superficial tests, or get stuck in local minima. "Run it again" is not debugging - it's gambling.
 
 **Recognition requires understanding.** If you don't understand the code well enough to write it, how do you know the agent's solution is correct? You're trusting the same system that produced the code to also validate it.
 
-**Maintainability is sacrificed.** Code produced by iterated agent runs accumulates entropy. Dead code, abandoned approaches, inconsistent patterns, unnecessary abstractions-all the symptoms of code written without a coherent architectural vision.
+**Maintainability is sacrificed.** Code produced by iterated agent runs accumulates entropy. Dead code, abandoned approaches, inconsistent patterns, unnecessary abstractions - all the symptoms of code written without a coherent architectural vision.
 
 ---
 
