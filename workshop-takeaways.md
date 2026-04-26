@@ -12,11 +12,11 @@ This doc is a position piece on what to take from the workshop and what to leave
 
 ## Take
 
-**Hooks for process discipline.** The workshop's pre-tool-use hooks deterministically block actions Claude shouldn't take, regardless of what the model decides. Same primitive, different target: block `git push` and remote-rewiring from sandbox clones, so a throwaway can never accidentally become published history. See `.claude/hooks/sandbox-guard.sh` and `.claude/settings.json`.
+**Hooks for process discipline.** The workshop's pre-tool-use hooks deterministically block actions Claude shouldn't take, regardless of what the model decides. Same primitive, different target: block `git push` and remote-rewiring from sandbox clones, so a throwaway can never accidentally become published history. See `hooks/sandbox-guard.sh` and `hooks/hooks.json`.
 
 What hooks are *not* used for here: prompting the human. The decision to generate a replay guide belongs to the user, not a `Stop` hook firing on every turn end. That nudge lives in the `vibe-coding` skill instead — Claude asks at session end, the user answers.
 
-**Plugins to ship the methodology.** A plugin bundles skills, agents, hooks, and settings into one folder. `claude plugin install` and a team inherits the whole workflow. This is the actual answer to "how does Human Replay scale beyond one engineer." Without packaging, every adopter has to wire `.claude/` by hand.
+**Plugins to ship the methodology.** A plugin bundles skills, agents, and hooks into one folder. `claude plugin install` and a team inherits the whole workflow. This repo is now packaged that way (`.claude-plugin/plugin.json`); a team installs once and every adopter has the methodology wired up. The one exception is permissions, which Claude Code does not currently let plugins ship; users paste an allowlist into their own settings (see README).
 
 **Skills as durable instructions.** `/vibe-coding` and `/replay-guide-generator` are exactly the skill pattern the workshop endorses. Description matters: Claude auto-routes to skills based on the description text, so the skill name and one-line description carry real weight. Existing skills in this repo already follow this shape.
 

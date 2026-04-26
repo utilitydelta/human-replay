@@ -26,36 +26,85 @@ Read more:
 
 ## What this is
 
-A bundle of Claude Code skills, agents, and a sandbox-discipline hook that operationalize Human Replay. You vibe in a throwaway. The orchestrator spawns a researcher, grills you on system invariants, then runs autonomous phases. When you are done, the replay-guide generator analyzes the final state and produces an ordered rebuild path.
+A Claude Code plugin that operationalizes Human Replay. You vibe in a throwaway. The orchestrator spawns a researcher, grills you on system invariants, then runs autonomous phases. When you are done, the replay-guide generator analyzes the final state and produces an ordered rebuild path.
 
 ```
 SANDBOX → GRILLING → AUTONOMOUS PHASES → REPLAY GUIDE → REAL CODEBASE
   AI       You          AI                 AI            You
 ```
 
+## Install
+
+One-time, global:
+
+```bash
+claude plugin install https://github.com/utilitydelta/human-replay
+```
+
+Reload plugins (`/reload-plugins`) or restart Claude Code. The plugin's skills (`/vibe-prep`, `/vibe-coding`, `/vibe-status`, `/grill-me`), agents, and the sandbox-discipline hook are now active in every project.
+
+### Permissions allowlist (recommended)
+
+Plugins cannot ship permission rules. To stop autonomous runs from stalling on permission prompts every five minutes, paste this into your user settings (`~/.claude/settings.json` under `permissions.allow`) or your project's `.claude/settings.local.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)",
+      "Bash(git branch:*)", "Bash(git ls-files:*)", "Bash(git blame:*)",
+      "Bash(git rev-parse:*)", "Bash(git add:*)", "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(rg:*)", "Bash(grep:*)", "Bash(find:*)", "Bash(ls:*)", "Bash(cat:*)",
+      "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)", "Bash(file:*)",
+      "Bash(mkdir -p:*)", "Bash(touch:*)",
+      "Bash(cargo test:*)", "Bash(cargo check:*)", "Bash(cargo build:*)",
+      "Bash(cargo clippy:*)", "Bash(cargo fmt:*)", "Bash(cargo run:*)",
+      "Bash(npm test:*)", "Bash(npm run build:*)", "Bash(npm run lint:*)",
+      "Bash(npm run typecheck:*)", "Bash(npm install:*)", "Bash(npx tsc:*)",
+      "Bash(yarn test:*)", "Bash(yarn build:*)", "Bash(pnpm test:*)",
+      "Bash(pnpm build:*)", "Bash(pytest:*)", "Bash(python -m pytest:*)",
+      "Bash(python -m mypy:*)", "Bash(go test:*)", "Bash(go build:*)",
+      "Bash(go vet:*)", "Bash(make test:*)", "Bash(make build:*)",
+      "Bash(make check:*)", "Bash(make lint:*)"
+    ]
+  }
+}
+```
+
+Read-only and standard-build commands only. Anything destructive still prompts.
+
+### Manual install (no plugin support)
+
+If `claude plugin install` is not available in your Claude Code build, clone this repo and copy the contents into your project's `.claude/` directory:
+
+```bash
+git clone https://github.com/utilitydelta/human-replay /tmp/human-replay
+mkdir -p .claude
+cp -r /tmp/human-replay/agents .claude/
+cp -r /tmp/human-replay/skills .claude/
+cp -r /tmp/human-replay/hooks .claude/
+```
+
+Then add a `.claude/settings.json` referencing the hook script and the permissions block above.
+
 ## Quick start
 
 ### 1. Set up the sandbox
 
-Easiest path: invoke `/vibe-prep` from the original repo and let it walk you through. It asks where to put the sandbox (default `~/sandbox/[repo-name]-[feature-slug]`), copies the repo, activates the hook.
+From your real repo, invoke `/vibe-prep`. It asks where to put the sandbox (default `~/sandbox/[repo-name]-[feature-slug]`), copies the repo, drops a `.sandbox` marker that arms the discipline hook.
 
 Manual equivalent:
 
 ```bash
 cp -r /path/to/your-repo ~/sandbox/your-repo-feature
 cd ~/sandbox/your-repo-feature
-touch .sandbox  # marker. activates the sandbox-discipline hook.
+touch .sandbox
 ```
 
-You do not need `git remote remove origin`. The hook blocks `git push` and origin rewrites from any directory containing a `.sandbox` marker. Keeping the origin reference lets you `git fetch` to compare against upstream when useful.
+You do not need `git remote remove origin`. The hook blocks `git push` and origin rewrites from any directory containing a `.sandbox` marker. Keeping the origin lets you `git fetch` to compare against upstream when useful.
 
-### 2. Copy the agents and skills
-
-```bash
-cp -r .claude/ ~/sandbox/your-repo-feature/.claude/
-```
-
-### 3. Vibe
+### 2. Vibe
 
 Open Claude Code in the sandbox and invoke `/vibe-coding`. Provide a design doc or feature description.
 
@@ -66,7 +115,7 @@ What happens, in order:
 3. **Phases.** The orchestrator breaks work into 2 to 4 hour phases. Each phase: implementer, three validators (integration, design conformance, code architecture), commit, state update.
 4. **Wrap.** When you say done, Claude asks whether to generate the replay guide or run more tweaks first. You decide.
 
-### 4. Generate the replay guide
+### 3. Generate the replay guide
 
 ```
 Generate a replay guide for this session. Base commit: abc123
@@ -83,7 +132,7 @@ A vibe session can run autonomously for hours. Invoke `/vibe-status` at any poin
 - **Overview.** What was built, key decisions, files affected.
 - **System Invariants.** Verbatim from grilling. These hold across the entire feature, every phase below is bound by them.
 - **Dependency graph.** Mermaid diagram showing build order.
-- **Phased steps.** Grouped by layer (Data Models → Core Logic → API → Tests).
+- **Phased steps.** Grouped by layer (Data Models → Core Logic → API → Tests). Each step links to file:line, no big code blocks.
 - **Domain-specific retrospectives.** Reflection prompts tailored to the codebase type (frontend, backend, database, infra, real-time, ML, CLI).
 - **Checkpoints.** Understanding checks and design critiques between phases.
 
@@ -97,7 +146,7 @@ These force critical reading. Catch the edge cases the LLM missed.
 
 ## Sandbox discipline
 
-One deterministic hook ships in `.claude/hooks/sandbox-guard.sh`. Fires when `.sandbox` is present at the repo root.
+One deterministic hook ships in `hooks/sandbox-guard.sh`. Fires when `.sandbox` is present at the repo root.
 
 **Pre-tool-use guard.** Blocks `git push`, `git remote add origin`, and `git remote set-url origin` from inside a sandbox. Sandboxes are throwaway. Replay in your real working copy and push from there.
 

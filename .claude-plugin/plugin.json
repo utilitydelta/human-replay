@@ -1,0 +1,11 @@
+{
+  "name": "human-replay",
+  "description": "Vibe coding without losing your codebase. Skills, agents, and hooks for sandbox-based exploration with grilling-driven invariant capture and structured replay-guide generation.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Tyson Brown"
+  },
+  "homepage": "https://github.com/utilitydelta/human-replay",
+  "repository": "https://github.com/utilitydelta/human-replay",
+  "license": "MIT"
+}
