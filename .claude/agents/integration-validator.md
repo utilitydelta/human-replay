@@ -2,7 +2,7 @@
 name: integration-validator
 description: Runs build checks and tests, reporting results clearly. Use to catch regressions without polluting main context with verbose test output.
 tools: Bash, Read, Grep
-model: haiku
+model: opus
 ---
 
 # Integration Validator Agent

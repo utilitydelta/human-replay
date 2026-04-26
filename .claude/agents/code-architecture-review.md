@@ -2,7 +2,7 @@
 name: code-architecture-review
 description: Reviews code for architectural patterns, abstraction levels, and reuse of existing code. Use to catch over-engineering, missed abstractions, or pattern violations.
 tools: Read, Glob, Grep
-model: sonnet
+model: opus
 ---
 
 # Code Architecture Review Agent
