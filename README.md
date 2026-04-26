@@ -35,13 +35,14 @@ SANDBOX → GRILLING → AUTONOMOUS PHASES → REPLAY GUIDE → REAL CODEBASE
 
 ## Install
 
-One-time, global:
+Inside Claude Code, run:
 
-```bash
-claude plugin install https://github.com/utilitydelta/human-replay
+```
+/plugin marketplace add utilitydelta/human-replay
+/plugin install human-replay@human-replay
 ```
 
-Reload plugins (`/reload-plugins`) or restart Claude Code. The plugin's skills (`/vibe-prep`, `/vibe-coding`, `/vibe-status`, `/grill-me`), agents, and the sandbox-discipline hook are now active in every project.
+Both are slash commands, not shell. The first registers this repo as a marketplace; the second installs the plugin from it. Reload plugins (`/reload-plugins`) or restart Claude Code. The plugin's skills (`/vibe-prep`, `/vibe-coding`, `/vibe-status`, `/grill-me`), agents, and the sandbox-discipline hook are now active in every project.
 
 ### Permissions allowlist (recommended)
 
