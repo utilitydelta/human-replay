@@ -158,12 +158,13 @@ graph TD
 
 ### Step {N}.{M}: {What you are building}
 
+**Symbol:** `{exact_function_name}`
 **File:** `path/to/file.rs:42`
 **Action:** Create | Modify | Delete
 
-**Why this exists:** {One or two sentences. Pull from progress log "Key decisions" when available. The human is reading this to understand the design, not to copy code.}
+**Why:** {One or two sentences. Pull from progress log "Key decisions" when available. The human is reading this to understand the design, not to copy code.}
 
-**Invariants in play:** {List any System Invariants this step must satisfy. Or "none direct".}
+**Invariants:** {Comma-separated rule names that match the System Invariants headings verbatim, e.g. `Single writer, Confirmed before acked`. Or omit the line.}
 
 **What to write:**
 
@@ -176,10 +177,10 @@ graph TD
 - [ ] {Concrete check: "Run `cargo check`", "Open the page and click X", "Curl the endpoint and assert 200"}
 - [ ] {Another}
 
-**Retrospective** *(answer before continuing)*:
+**Retrospective:** {One step-specific question about a design choice or failure mode this code makes — a single line. The replay tool surfaces it at the step boundary.}
 
-- {Step-specific question about a design choice this code makes}
-- {Domain-relevant question about edge cases or failure modes}
+{Optional extra questions as bullets below — the human reads them, the tool ignores them:}
+- {Domain-relevant question about edge cases}
 - {Question that challenges the approach: "Is this the right shape?"}
 
 ---
@@ -208,6 +209,43 @@ graph TD
 
 You walked the territory. The codebase is yours. Delete the sandbox.
 ```
+
+## Machine-replayable guides (celeriant-tab)
+
+When the guide will be driven by the celeriant-tab replay extension (not just read by a
+human), it must be *resolvable*, not just readable. The extension never trusts the
+guide's prose for code — it resolves each step's bytes from real files:
+
+- **Before** = the symbol as it stands in the **target** repo (the workspace the human
+  opens and edits).
+- **After** = the symbol in the **sandbox** (`celeriantTab.sandboxRoot`).
+
+So you do not paste code. You name the symbol and the file, and the tool reads both.
+Three rules follow:
+
+1. **Every step carries `**Symbol:**` (exact name) + `**File:**` (path from the repo
+   root) + `**Action:**`.** No Symbol → the tool can't resolve the step. The diff-replay
+   then drives Before→After in place.
+
+2. **Steps are the per-symbol delta of target↔sandbox, not the sandbox's git log.** The
+   target may already contain some of the sandbox's work, or have drifted. For each
+   symbol the sandbox changed, compare it to the *target's* current version:
+   - byte-identical → **not a step** (already there; skip it silently or note it),
+   - present in sandbox, absent in target → **Create**,
+   - present in target, absent in sandbox → **Delete**,
+   - differs → **Modify**.
+   Build the steps from this comparison. Generate from `git diff {base}..HEAD` to find
+   *which* symbols moved, then re-classify each against the target before emitting it.
+
+3. **The resolver is function-only.** It finds free functions and impl methods by name
+   (the first match in the file — so flag any symbol whose name repeats across impls).
+   Non-function changes — structs, enums, consts, type aliases, macros, config, module
+   wiring, test-harness edits — **cannot** be auto-replayed. Do not emit them as
+   Create/Modify steps; the tool will report them unresolvable. Put them in a dedicated
+   **## Manual steps** section the human applies by hand before or after the walk.
+
+A step with embedded `**Before:**`/`**After:**` fences still works (self-contained
+guide); the file-resolution path is what lets the guide stay lean for a large change.
 
 ## Code blocks: when to include them
 
