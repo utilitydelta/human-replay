@@ -237,12 +237,16 @@ Three rules follow:
    Build the steps from this comparison. Generate from `git diff {base}..HEAD` to find
    *which* symbols moved, then re-classify each against the target before emitting it.
 
-3. **The resolver is function-only.** It finds free functions and impl methods by name
-   (the first match in the file — so flag any symbol whose name repeats across impls).
-   Non-function changes — structs, enums, consts, type aliases, macros, config, module
-   wiring, test-harness edits — **cannot** be auto-replayed. Do not emit them as
-   Create/Modify steps; the tool will report them unresolvable. Put them in a dedicated
-   **## Manual steps** section the human applies by hand before or after the walk.
+3. **Modify/Delete address any named item; Create is still function-oriented.** The
+   resolver finds functions, impl methods, structs, enums, unions, consts, statics, type
+   aliases, traits, modules, and macros by name (first match in the file — flag any name
+   that repeats). So a **Modify** or **Delete** step works for a struct or enum just as
+   for a function. A **Create** step, though, builds the new symbol via the descend-and-
+   fill walk, which is function-shaped — creating a brand-new struct/enum/const, or
+   inserting a new method into an existing impl, isn't handled yet. Route those (and
+   non-item edits: config, module wiring, test-harness changes) to a **## Manual steps**
+   section. A whole-symbol field/variant addition reads as a Modify of its struct/enum —
+   prefer that over a Create when the container already exists.
 
 A step with embedded `**Before:**`/`**After:**` fences still works (self-contained
 guide); the file-resolution path is what lets the guide stay lean for a large change.
