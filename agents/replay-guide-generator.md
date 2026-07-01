@@ -160,7 +160,7 @@ graph TD
 
 **Symbol:** `{exact_function_name}`
 **File:** `path/to/file.rs:42`
-**Action:** Create | Modify | Delete
+**Action:** Create | Modify | Delete | Create File
 
 **Why:** {One or two sentences. Pull from progress log "Key decisions" when available. The human is reading this to understand the design, not to copy code.}
 
@@ -247,6 +247,20 @@ Three rules follow:
    non-item edits: config, module wiring, test-harness changes) to a **## Manual steps**
    section. A whole-symbol field/variant addition reads as a Modify of its struct/enum —
    prefer that over a Create when the container already exists.
+
+4. **Brand-new files can replay at FILE granularity: `**Action:** Create File`.** One
+   step drops the whole file from the sandbox in a single gesture — no symbol walk. Use
+   it for boilerplate-heavy new files (tests, fixtures, harness scaffolding) where
+   tabbing node by node teaches nothing; the human reads the file instead. `**Symbol:**`
+   is optional (defaults to the file path); `**File:**` is required; write the
+   retrospective about what the file *proves*, not how it's built. This also absorbs
+   new files full of non-fn items that rule 3 would otherwise push to Manual.
+
+   Granularity is the **caller's choice**. Default: new files that are mostly
+   boilerplate → `Create File`; a new file whose core logic deserves symbol-by-symbol
+   replay → `Create` steps for the load-bearing functions (and `Create File` is wrong).
+   If the invocation says "file granularity for new files", every brand-new file becomes
+   one `Create File` step. If it says "symbol granularity", none do.
 
 A step with embedded `**Before:**`/`**After:**` fences still works (self-contained
 guide); the file-resolution path is what lets the guide stay lean for a large change.
