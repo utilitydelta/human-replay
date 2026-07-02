@@ -7,7 +7,7 @@
     {
       "name": "human-replay",
       "source": "./",
-      "description": "Vibe coding without losing your codebase. Skills, agents, and hooks for sandbox-based exploration with grilling-driven invariant capture and structured replay-guide generation.",
+      "description": "Vibe coding without losing your codebase. Sandbox prep and replay-guide generation: the AI explores in a disposable sandbox, the guide turns its final state into an ordered rebuild path you replay yourself.",
       "version": "1.0.0",
       "homepage": "https://github.com/utilitydelta/human-replay",
       "license": "MIT"

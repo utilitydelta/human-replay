@@ -26,12 +26,20 @@ Read more:
 
 ## What this is
 
-A Claude Code plugin that operationalizes Human Replay. You vibe in a throwaway. The orchestrator spawns a researcher, grills you on system invariants, then runs autonomous phases. When you are done, the replay-guide generator analyzes the final state and produces an ordered rebuild path.
+A Claude Code plugin that brackets a sandbox session. Three pieces:
+
+- **`/prep`** — copies your repo to a disposable sandbox and arms the sandbox guard.
+- **`replay-guide-generator`** — an agent that reads the sandbox's final state and produces an ordered rebuild path.
+- **`sandbox-guard`** — a hook that makes the sandbox unpublishable.
+
+What happens *between* prep and generation — how you or your agents build in the sandbox — is deliberately not this plugin's business. Use whatever method you already trust.
 
 ```
-SANDBOX → GRILLING → AUTONOMOUS PHASES → REPLAY GUIDE → REAL CODEBASE
-  AI       You          AI                 AI            You
+PREP → YOUR BUILD-OUT → REPLAY GUIDE → REAL CODEBASE
+ AI      any method       AI            You
 ```
+
+The replay itself can be manual, or driven Tab by Tab through the [`human-replay-vscode-extension`](https://github.com/utilitydelta/human-replay-vscode-extension), which resolves each guide step's bytes from the sandbox and the target tree and replays them into your real branch as inline completions.
 
 ## Install
 
@@ -42,58 +50,13 @@ Inside Claude Code, run:
 /plugin install human-replay@human-replay
 ```
 
-Both are slash commands, not shell. The first registers this repo as a marketplace; the second installs the plugin from it. Reload plugins (`/reload-plugins`) or restart Claude Code. The plugin's skills (`/vibe-prep`, `/vibe-coding`, `/vibe-status`, `/grill-me`), agents, and the sandbox-discipline hook are now active in every project.
-
-### Permissions allowlist (recommended)
-
-Plugins cannot ship permission rules. To stop autonomous runs from stalling on permission prompts every five minutes, paste this into your user settings (`~/.claude/settings.json` under `permissions.allow`) or your project's `.claude/settings.local.json`:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(git status:*)", "Bash(git diff:*)", "Bash(git log:*)", "Bash(git show:*)",
-      "Bash(git branch:*)", "Bash(git ls-files:*)", "Bash(git blame:*)",
-      "Bash(git rev-parse:*)", "Bash(git add:*)", "Bash(git commit:*)",
-      "Bash(git checkout:*)",
-      "Bash(rg:*)", "Bash(grep:*)", "Bash(find:*)", "Bash(ls:*)", "Bash(cat:*)",
-      "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)", "Bash(file:*)",
-      "Bash(mkdir -p:*)", "Bash(touch:*)",
-      "Bash(cargo test:*)", "Bash(cargo check:*)", "Bash(cargo build:*)",
-      "Bash(cargo clippy:*)", "Bash(cargo fmt:*)", "Bash(cargo run:*)",
-      "Bash(npm test:*)", "Bash(npm run build:*)", "Bash(npm run lint:*)",
-      "Bash(npm run typecheck:*)", "Bash(npm install:*)", "Bash(npx tsc:*)",
-      "Bash(yarn test:*)", "Bash(yarn build:*)", "Bash(pnpm test:*)",
-      "Bash(pnpm build:*)", "Bash(pytest:*)", "Bash(python -m pytest:*)",
-      "Bash(python -m mypy:*)", "Bash(go test:*)", "Bash(go build:*)",
-      "Bash(go vet:*)", "Bash(make test:*)", "Bash(make build:*)",
-      "Bash(make check:*)", "Bash(make lint:*)"
-    ]
-  }
-}
-```
-
-Read-only and standard-build commands only. Anything destructive still prompts.
-
-### Manual install (no plugin support)
-
-If `claude plugin install` is not available in your Claude Code build, clone this repo and copy the contents into your project's `.claude/` directory:
-
-```bash
-git clone https://github.com/utilitydelta/human-replay /tmp/human-replay
-mkdir -p .claude
-cp -r /tmp/human-replay/agents .claude/
-cp -r /tmp/human-replay/skills .claude/
-cp -r /tmp/human-replay/hooks .claude/
-```
-
-Then add a `.claude/settings.json` referencing the hook script and the permissions block above.
+Both are slash commands, not shell. The first registers this repo as a marketplace; the second installs the plugin from it. Reload plugins (`/reload-plugins`) or restart Claude Code. The `/prep` skill, the `replay-guide-generator` agent, and the sandbox-guard hook are now active in every project.
 
 ## Quick start
 
 ### 1. Set up the sandbox
 
-From your real repo, invoke `/vibe-prep`. It asks where to put the sandbox (default `~/sandbox/[repo-name]-[feature-slug]`), copies the repo, drops a `.sandbox` marker that arms the discipline hook.
+From your real repo, invoke `/prep`. It asks where to put the sandbox (default `~/sandbox/[repo-name]-[feature-slug]`), copies the repo, and drops a `.sandbox` marker that arms the guard hook.
 
 Manual equivalent:
 
@@ -105,35 +68,30 @@ touch .sandbox
 
 You do not need `git remote remove origin`. The hook blocks `git push` and origin rewrites from any directory containing a `.sandbox` marker. Keeping the origin lets you `git fetch` to compare against upstream when useful.
 
-### 2. Vibe
+### 2. Build
 
-Open Claude Code in the sandbox and invoke `/vibe-coding`. Provide a design doc or feature description.
-
-What happens, in order:
-
-1. **Researcher.** Explores the codebase. Surfaces candidate system invariants and links to existing architecture docs. Returns a brief.
-2. **Grilling** (vendored from [`mattpocock/skills`](https://github.com/mattpocock/skills)). The orchestrator interrogates you one question at a time until every branch of the decision tree is resolved and the system invariants list is approved. Spend 30 minutes here to save 3 hours later.
-3. **Phases.** The orchestrator breaks work into 2 to 4 hour phases. Each phase: implementer, three validators (integration, design conformance, code architecture), commit, state update.
-4. **Wrap.** When you say done, Claude asks whether to generate the replay guide or run more tweaks first. You decide.
+Open Claude Code in the sandbox and build however you like — a single agent, your own orchestration skills, by hand. The sandbox is throwaway; the only thing the next step needs is the final state and whatever notes your method leaves behind.
 
 ### 3. Generate the replay guide
+
+When the work settles, from the sandbox:
 
 ```
 Generate a replay guide for this session. Base commit: abc123
 ```
 
-The replay-guide generator reads `docs/SESSION_STATE.md` and `docs/[feature-slug]-progress.md` first, then the diff. Output goes to `replay-guides/{name}.md`.
+The generator reads whatever session artifacts exist (progress logs, design docs, commit messages), then the diff. Output goes to `replay-guides/{name}.md`, validated against the real parser before it ships.
 
-### Checking in mid-run
+### 4. Replay
 
-A vibe session can run autonomously for hours. Invoke `/vibe-status` at any point to get a one-screen summary: current phase, completed phases, active stubs, recent commits, system invariants in effect. Read-only, never modifies state.
+In your real repo, with your patterns. By hand, or step by step with the `human-replay-vscode-extension`: point `replayTab.sandboxRoot` at the sandbox, open the guide, and Tab through each symbol's Before→After. Then delete the sandbox.
 
 ## What the replay guide contains
 
 - **Overview.** What was built, key decisions, files affected.
-- **System Invariants.** Verbatim from grilling. These hold across the entire feature, every phase below is bound by them.
+- **System Invariants.** Carried verbatim when your session captured them; reconstructed from code (and labeled as such) when it didn't.
 - **Dependency graph.** Mermaid diagram showing build order.
-- **Phased steps.** Grouped by layer (Data Models → Core Logic → API → Tests). Each step links to file:line, no big code blocks.
+- **Phased steps.** Grouped by layer (Data Models → Core Logic → API → Tests). Each step names a symbol, a file, and an action; no big code blocks — the replay tool resolves the actual bytes from the sandbox and target trees.
 - **Domain-specific retrospectives.** Reflection prompts tailored to the codebase type (frontend, backend, database, infra, real-time, ML, CLI).
 - **Checkpoints.** Understanding checks and design critiques between phases.
 
@@ -152,8 +110,6 @@ One deterministic hook ships in `hooks/sandbox-guard.sh`. Fires when `.sandbox` 
 **Pre-tool-use guard.** Blocks `git push`, `git remote add origin`, and `git remote set-url origin` from inside a sandbox. Sandboxes are throwaway. Replay in your real working copy and push from there.
 
 Claude cannot talk its way past it. Disable by removing the marker.
-
-Replay-guide generation is *not* automated. At the end of a session Claude asks whether to generate it or run more tweaks first. You decide when the work is settled.
 
 ## License
 
