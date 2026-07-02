@@ -248,32 +248,37 @@ The rules that follow:
    Build the steps from this comparison. Generate from `git diff {base}..HEAD` to find
    *which* symbols moved, then re-classify each against the target before emitting it.
 
-3. **Modify/Delete address any named item; Create is still function-oriented.** The
-   resolver finds functions, impl methods, structs, enums, unions, consts, statics, type
-   aliases, traits, modules, and macros by name (first match in the file — flag any name
-   that repeats). So a **Modify** or **Delete** step works for a struct or enum just as
-   for a function. A **Create** step, though, builds the new symbol via the descend-and-
-   fill walk, which is function-shaped — creating a brand-new struct/enum/const, or
-   inserting a new method into an existing impl, isn't handled yet. Route those (and
-   non-item edits: import lines, module wiring, config) to a per-file **Patch** step
-   (rule 5) — **not** to Manual steps; a human WILL forget a manual bullet, a Patch step
-   sits in the counter like any other. A whole-symbol field/variant addition reads as a
-   Modify of its struct/enum — prefer that over a Create when the container already
-   exists.
+3. **Modify/Delete/Create all address any named item.** The resolver finds functions,
+   impl methods, structs, enums, unions, consts, statics, type aliases, traits, modules,
+   and macros by name (first match in the file — flag any name that repeats). A
+   **Create** step walks what the walk has a shape for — functions, and item containers
+   (a class/impl/mod discloses shell-first, members one by one) — and lands anything
+   else (a struct, a const, an interface) as one whole-symbol block ghost; either way
+   the placement is container-aware (a method created inside an existing class lands in
+   that class). Route only non-item edits (import lines, module wiring, config) to a
+   per-file **Patch** step (rule 5) — **not** to Manual steps; a human WILL forget a
+   manual bullet, a Patch step sits in the counter like any other. A whole-symbol
+   field/variant addition reads as a Modify of its struct/enum — prefer that over a
+   Create when the container already exists.
 
-4. **Brand-new files can replay at FILE granularity: `**Action:** Create File`.** One
-   step drops the whole file from the sandbox in a single gesture — no symbol walk. Use
-   it for boilerplate-heavy new files (tests, fixtures, harness scaffolding) where
-   tabbing node by node teaches nothing; the human reads the file instead. `**Symbol:**`
-   is optional (defaults to the file path); `**File:**` is required; write the
-   retrospective about what the file *proves*, not how it's built. This also absorbs
-   new files full of non-fn items that rule 3 would otherwise push to Manual.
+4. **Brand-new files: one `Create File` step per teaching moment — decompose when
+   there is more than one.** The engine owns the gesture grain (a create-file
+   discloses segment by segment: one Tab per blank-line group, the full walk inside
+   functions and classes); YOU own the teaching grain. Decide by Whys and
+   retrospectives, not by size:
 
-   Granularity is the **caller's choice**. Default: new files that are mostly
-   boilerplate → `Create File`; a new file whose core logic deserves symbol-by-symbol
-   replay → `Create` steps for the load-bearing functions (and `Create File` is wrong).
-   If the invocation says "file granularity for new files", every brand-new file becomes
-   one `Create File` step. If it says "symbol granularity", none do.
+   - **One concept** (a DTO, a fixture, a single class, boilerplate) → one
+     `Create File` step. `**Symbol:**` is optional (defaults to the file path);
+     `**File:**` is required; write the retrospective about what the file *proves*.
+   - **Several concepts** (an error type + a helper class + the engine, each worth
+     its own Why and retrospective) → a `Create File` step carrying an embedded
+     `**After:**` fence with only the file's SKELETON (header comment, usings,
+     namespace/module frame — a byte-exact PREFIX of the sandbox file), followed by
+     ordinary `Create` steps for each symbol in dependency order, each with its own
+     Why and retrospective. Anything left below symbol grain rides the file's
+     trailing Patch step (rule 5). The validator proves the decomposition rebuilds
+     the sandbox file byte-exact — a missing symbol step is a FAIL, not a surprise
+     at the keyboard.
 
 5. **Everything below symbol grain rides a per-file `**Action:** Patch` step.** A Patch
    step names only a `**File:**`; at replay the tool line-diffs the live target file
