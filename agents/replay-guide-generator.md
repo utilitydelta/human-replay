@@ -171,7 +171,7 @@ graph TD
 
 **Symbol:** `{exact_function_name}`
 **File:** `path/to/file.rs:42`
-**Action:** Create | Modify | Delete | Create File
+**Action:** Create | Modify | Delete | Create File | Patch
 
 **Why:** {One or two sentences. Pull from session notes when available. The human is reading this to understand the design, not to copy code.}
 
@@ -255,9 +255,11 @@ The rules that follow:
    for a function. A **Create** step, though, builds the new symbol via the descend-and-
    fill walk, which is function-shaped — creating a brand-new struct/enum/const, or
    inserting a new method into an existing impl, isn't handled yet. Route those (and
-   non-item edits: config, module wiring, test-harness changes) to a **## Manual steps**
-   section. A whole-symbol field/variant addition reads as a Modify of its struct/enum —
-   prefer that over a Create when the container already exists.
+   non-item edits: import lines, module wiring, config) to a per-file **Patch** step
+   (rule 5) — **not** to Manual steps; a human WILL forget a manual bullet, a Patch step
+   sits in the counter like any other. A whole-symbol field/variant addition reads as a
+   Modify of its struct/enum — prefer that over a Create when the container already
+   exists.
 
 4. **Brand-new files can replay at FILE granularity: `**Action:** Create File`.** One
    step drops the whole file from the sandbox in a single gesture — no symbol walk. Use
@@ -273,19 +275,32 @@ The rules that follow:
    If the invocation says "file granularity for new files", every brand-new file becomes
    one `Create File` step. If it says "symbol granularity", none do.
 
-5. **Languages.** The extension replays Rust, C#, TypeScript/JavaScript (tsx/jsx
-   included), Python, and Markdown. The symbol is the named item in that language:
-   fn/struct/enum/etc. (Rust), class/method/property (C#), function/class/method/
-   interface/type/const (TS/JS, `export` travels with the symbol), def/class
-   (Python, decorators travel with the symbol), and for Markdown the **heading
-   text** of a section (`**Symbol:** Setup` addresses `## Setup` through the next
-   same-or-higher heading). Updated docs are ordinary Modify steps on their
-   section; new docs are `Create File`. Python and Markdown have no create walk:
-   a Create step lands the whole symbol in one Tab, which is fine — prefer
-   `Create File` when the whole file is new anyway. Any other extension (shell,
-   config, SQL) goes to Manual steps.
+5. **Everything below symbol grain rides a per-file `**Action:** Patch` step.** A Patch
+   step names only a `**File:**`; at replay the tool line-diffs the live target file
+   against the sandbox file and serves each remaining hunk on the Tab surface — import
+   edits, per-file consts, module-level `//!` doc headers, a top-level item whose home
+   is a convention ("after the imports"), and whole files in languages with no grammar
+   (shell, config, SQL). Emit one Patch step per file, ORDERED AFTER all of that file's
+   symbol steps (an early Patch would sweep later steps' hunks in with it — correct but
+   unreadable). Reserve **## Manual steps** for what even a Patch can't do: decisions
+   (hand-merging a conflicting doc), actions outside the repo, or anything needing
+   judgment rather than bytes.
 
-6. **Validate before you ship — non-negotiable.** The parser in the
+6. **Languages.** The extension replays Rust, C#, TypeScript/JavaScript (tsx/jsx
+   included), Python, Markdown, HTML, and CSS. The symbol is the named item in that
+   language: fn/struct/enum/etc. (Rust), class/method/property (C#), function/class/
+   method/interface/type/const (TS/JS, `export` travels with the symbol), def/class
+   (Python, decorators travel with the symbol), for Markdown the **heading text** of a
+   section (`**Symbol:** Setup` addresses `## Setup` through the next same-or-higher
+   heading), for HTML `tag#id` (an element without an id is unaddressable — the
+   spec-unique tags `html`/`head`/`body`/`title` resolve bare), and for CSS the rule's
+   prelude text (`**Symbol:** .card:hover, .tile`, or `@media (max-width: 600px)` for
+   an at-rule group). Updated docs are ordinary Modify steps on their section; new docs
+   are `Create File`. Python, Markdown, HTML, and CSS have no create walk: a Create
+   step lands the whole symbol in one Tab, which is fine — prefer `Create File` when
+   the whole file is new anyway. Any other extension goes to a Patch step (rule 5).
+
+7. **Validate before you ship — non-negotiable.** The parser in the
    `human-replay-vscode-extension` repo is the single source of truth for this
    format, and its validator is your oracle:
 
