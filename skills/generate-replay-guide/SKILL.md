@@ -152,7 +152,10 @@ accordingly, and hold these rules for every Why, Overview, and Manual bullet:
 
 These hold across the entire feature. Every phase below is bound by them. If your replay diverges from the AI's approach, your divergence must still satisfy these.
 
-{Verbatim from session artifacts when captured; otherwise reconstructed from code and labeled as such. Each invariant: the rule + the reason it exists.}
+- **Rule name:** reason it exists
+- **Another rule:** its reason
+
+{Verbatim from session artifacts when captured; otherwise reconstructed from code and labeled as such. The bold rule name must be clean — no trailing period, backticks, or other punctuation — and must match each step's **Invariants:** reference verbatim (case-insensitive).}
 
 ## Dependency graph
 
@@ -280,10 +283,21 @@ The rules that follow:
      `**After:**` fence with only the file's SKELETON (header comment, usings,
      namespace/module frame — a byte-exact PREFIX of the sandbox file), followed by
      ordinary `Create` steps for each symbol in dependency order, each with its own
-     Why and retrospective. Anything left below symbol grain rides the file's
-     trailing Patch step (rule 5). The validator proves the decomposition rebuilds
-     the sandbox file byte-exact — a missing symbol step is a FAIL, not a surprise
-     at the keyboard.
+     Why and retrospective, and ALWAYS closed by a trailing `**Action:** Patch`
+     step for that file (rule 5). The patch is not optional: the creates rebuild
+     the symbols but at least the file's final newline sits below symbol grain,
+     so without it the whole-file byte-exact check fails. Shape:
+
+     ```
+     Step N.1  Create File  Widgets.cs   (skeleton fence)
+     Step N.2  Create       WidgetError
+     Step N.3  Create       WidgetEngine
+     Step N.4  Patch        Widgets.cs   (sweeps the residue)
+     ```
+
+     The validator proves the decomposition rebuilds the sandbox file
+     byte-exact — a missing symbol step or a missing trailing Patch is a FAIL,
+     not a surprise at the keyboard.
 
 5. **Everything below symbol grain rides a per-file `**Action:** Patch` step.** A Patch
    step names only a `**File:**`; at replay the tool line-diffs the live target file
