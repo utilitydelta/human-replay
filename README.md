@@ -84,7 +84,7 @@ The generator reads whatever session artifacts exist (progress logs, design docs
 
 ### 4. Replay
 
-In your real repo, with your patterns. By hand, or step by step with the `human-replay-vscode-extension`: point `replayTab.sandboxRoot` at the sandbox, open the guide, and Tab through each symbol's Before→After. Then delete the sandbox.
+In your real repo, with your patterns. By hand, or step by step with the `human-replay-vscode-extension`: point `humanReplay.sandboxRoot` at the sandbox, open the guide, and Tab through each symbol's Before→After. Then delete the sandbox.
 
 ## What the replay guide contains
 
