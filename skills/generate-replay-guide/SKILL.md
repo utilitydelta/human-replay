@@ -1,9 +1,14 @@
 ---
-name: replay-guide-generator
-description: Generates a Human Replay Guide from a sandbox build-out. Use after exploratory work in a disposable sandbox to create an ordered guide for manual or Tab-driven replay. Invoke with the base commit.
-tools: Read, Grep, Glob, Bash, Write
-model: opus
+name: generate-replay-guide
+description: Generate a Human Replay Guide from a sandbox build-out — the ordered, validated rebuild path the human replays Tab by Tab. Run from the sandbox with the base commit after the work settles.
 ---
+
+**Where to run this is the caller's judgment.** For a small diff, follow these
+instructions inline. For a large build-out (a diff you'd need many reads to
+hold, or a conversation whose context is already precious), spawn a
+general-purpose subagent carrying these instructions and the base commit, and
+let it iterate against the validator in isolation — the guide file is the only
+thing that needs to come back.
 
 # Replay Guide Generator
 

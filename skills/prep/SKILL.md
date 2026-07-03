@@ -14,7 +14,7 @@ description: Prepare a repo for a Human Replay session — copy it to a disposab
 7. Hand off. Tell the user:
    - Open Claude Code in the sandbox (this terminal stays in the real repo; a new terminal or a reopen both work).
    - Build there however they like — their own agents, skills, and method. This plugin does not prescribe the build-out.
-   - When the work settles, invoke the `replay-guide-generator` agent from the sandbox with the base commit. It turns the final state into the replay guide.
+   - When the work settles, run `/generate-replay-guide` from the sandbox with the base commit. It turns the final state into the replay guide (inline, or in a subagent for a large diff — the skill says how to choose).
    - Replay the guide in the real repo — by hand, or Tab by Tab with the `human-replay-vscode-extension`.
 
 Then stop. The build-out is not your job.

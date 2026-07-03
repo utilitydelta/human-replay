@@ -3,8 +3,8 @@
 The scout half of Human Replay, packaged as a Claude Code plugin. An AI explores
 in a disposable sandbox; this repo holds the two pieces that bracket that
 exploration: the `prep` skill (copy the repo to a sandbox, arm the guard) and the
-`replay-guide-generator` agent (turn the sandbox's final state into a
-machine-replayable guide). What happens between them — how the agent builds in
+`generate-replay-guide` skill (turn the sandbox's final state into a
+machine-replayable guide; the invoking agent decides inline vs subagent). What happens between them — how the agent builds in
 the sandbox — is deliberately not this plugin's business. Bring your own method.
 
 The human half is the sibling repo, `human-replay-vscode-extension`: a VS Code

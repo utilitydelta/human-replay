@@ -29,7 +29,7 @@ Read more:
 A Claude Code plugin that brackets a sandbox session. Three pieces:
 
 - **`/prep`** — copies your repo to a disposable sandbox and arms the sandbox guard.
-- **`replay-guide-generator`** — an agent that reads the sandbox's final state and produces an ordered rebuild path.
+- **`/generate-replay-guide`** — reads the sandbox's final state and produces an ordered, validated rebuild path (inline, or in a subagent for large diffs).
 - **`sandbox-guard`** — a hook that makes the sandbox unpublishable.
 
 What happens *between* prep and generation — how you or your agents build in the sandbox — is deliberately not this plugin's business. Use whatever method you already trust.
@@ -50,7 +50,7 @@ Inside Claude Code, run:
 /plugin install human-replay@human-replay
 ```
 
-Both are slash commands, not shell. The first registers this repo as a marketplace; the second installs the plugin from it. Reload plugins (`/reload-plugins`) or restart Claude Code. The `/prep` skill, the `replay-guide-generator` agent, and the sandbox-guard hook are now active in every project.
+Both are slash commands, not shell. The first registers this repo as a marketplace; the second installs the plugin from it. Reload plugins (`/reload-plugins`) or restart Claude Code. The `/prep` and `/generate-replay-guide` skills and the sandbox-guard hook are now active in every project.
 
 ## Quick start
 
