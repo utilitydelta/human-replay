@@ -1,20 +1,22 @@
 ---
 name: generate-replay-guide
-description: Generate a Human Replay Guide from a sandbox build-out — the ordered, validated rebuild path the human replays Tab by Tab. Run from the sandbox with the base commit after the work settles.
+description: Generate a Human Replay Guide from a sandbox build-out — the ordered, validated rebuild path the human replays Tab by Tab. Best run by the implementer at the end of the build, while its context is still hot; also runs cold from a fresh session with the base commit.
 ---
 
-**Where to run this is the caller's judgment.** For a small diff, follow these
-instructions inline. For a large build-out (a diff you'd need many reads to
-hold, or a conversation whose context is already precious), spawn a
-general-purpose subagent carrying these instructions and the base commit, and
-let it iterate against the validator in isolation — the guide file is the only
-thing that needs to come back.
+**Who runs this, and when.** The best guide comes from the agent that just
+built the work, generated before it completes — the hot build context is the
+asset, and a cold context reconstructing the build produces a worse guide than
+the agent that just walked it. Run inline by default. Spawn a general-purpose
+subagent carrying these instructions and the base commit only when the
+remaining context cannot hold this skill plus the guide — the guide file is
+the only thing that needs to come back. A cold run from a fresh session works
+too; expect to lean harder on the diff and the goal.
 
 # Replay Guide Generator
 
 You analyze the final state of a sandbox build-out and produce an ordered guide for a human to rebuild it from scratch in their real codebase.
 
-How the sandbox was built is not your concern. One agent or ten, orchestrated or freehand, any method — you read the final state, the diff, and whatever notes the session left behind. The guide is not a transcript. It is the path a knowledgeable pair programmer would have taken from the start. Skip dead ends. Skip refactoring loops. Teach the destination.
+How the sandbox was built is not the guide's concern. One agent or ten, orchestrated or freehand, any method — the guide is built from the final state, the diff, and the goal. It is not a transcript. It is the path a knowledgeable pair programmer would have taken from the start. Skip dead ends. Skip refactoring loops. Teach the destination.
 
 ## Five rules
 
@@ -29,32 +31,32 @@ How the sandbox was built is not your concern. One agent or ten, orchestrated or
 **Inputs:**
 
 1. `git diff {base}..HEAD` — the actual changes. This is the ground truth.
-2. Whatever session artifacts exist — progress logs, design docs, `docs/SESSION_STATE.md`, commit messages. Read what is there; require none of it. Different build methods leave different trails.
+2. The goal (`session/goal.md` or equivalent), if it exists — the captured intent.
+3. Your own memory of the build, when you are the implementer generating hot.
+
+**Not inputs: the session's trail docs.** `session/session-state.md`, `session/progress.md`, `session/scraps.md`, progress logs, any session narrative. The trail is gradient descent — wrong turns, backtracks, dead spikes — and a guide derived from it teaches the journey. The guide teaches the destination. The settled code and the goal are the only sources.
 
 **Output:**
 
-`replay-guides/{session-name}.md` — the rebuild path.
+`session/replay-guide.md` — the rebuild path.
 
-If no narrative artifacts exist, generate from the diff and the commit log alone, and say so prominently in the overview. The human needs to know they are reconstructing intent from code rather than reading captured intent.
+If no goal exists and you are running cold, generate from the diff and the commit log alone, and say so prominently in the overview. The human needs to know they are reconstructing intent from code rather than reading captured intent.
 
 ## Workflow
 
-### 1. Read the session artifacts first
-
-Before looking at the diff, sweep for whatever the session wrote down:
+### 1. Read the goal
 
 ```bash
-ls docs/ 2>/dev/null
 git log --oneline {base}..HEAD
 ```
 
-From whatever you find, extract:
+From the goal (and your own build memory, when hot), extract:
 
-- **System invariants / design constraints.** If the session captured properties that must hold (whatever file they live in), carry them forward verbatim. If it didn't, derive the load-bearing constraints from the code and label them as reconstructed.
-- **The narrative.** What was built, what was deferred, what was tried and abandoned. This is your filter for "skip the journey." Commit messages often carry this when no log does.
-- **Key decisions.** "Chose X over Y because…" entries are the hidden context the human needs.
+- **System invariants / design constraints.** If the goal states properties that must hold, carry them forward verbatim. If it doesn't, derive the load-bearing constraints from the code and label them as reconstructed.
+- **Key decisions.** "Chose X over Y because…" is the hidden context the human needs. Hot, you know these; cold, take what the goal and the code make obvious.
+- **The journey filter.** Hot, you know what was tried and abandoned — teach the destination anyway. Cold, commit messages hint at the journey; use them only to skip it, never to narrate it.
 
-If the notes contradict the diff (e.g. they claim X was implemented but X is missing), trust the diff and flag the discrepancy. Usually means a later refactor undid earlier work.
+If the goal contradicts the diff (e.g. it claims X but X is missing), trust the diff and flag the discrepancy. Usually means a later refactor undid earlier work.
 
 ### 2. Analyze the diff
 
@@ -105,7 +107,7 @@ Topological sort within and across clusters. If you find a cycle, flag it for th
 
 ### 6. Write the guide
 
-Output to `replay-guides/{session-name}.md`. Use the template below.
+Output to `session/replay-guide.md`. Use the template below.
 
 ## Output template
 
@@ -133,7 +135,7 @@ accordingly, and hold these rules for every Why, Overview, and Manual bullet:
 
 ## Overview
 
-**Built:** {one-paragraph summary, pulled from session notes + diff}
+**Built:** {one-paragraph summary, pulled from the goal + diff}
 
 **Files affected:** {count}, across {N} layers.
 
@@ -145,8 +147,8 @@ accordingly, and hold these rules for every Why, Overview, and Manual bullet:
 - {decision 2}
 - ...
 
-{If no narrative artifacts existed:}
-> ⚠️ This guide was generated from the diff and commit log alone. Invariants and decisions are reconstructed from code, not from captured intent. Verify against your own understanding of the spec before trusting the structure.
+{If no goal existed and the run was cold:}
+> ⚠️ This guide was generated from the diff and commit log alone. Invariants and decisions are reconstructed from code, not from captured intent. Verify against your own understanding of the goal before trusting the structure.
 
 ## System Invariants
 
@@ -155,7 +157,7 @@ These hold across the entire feature. Every phase below is bound by them. If you
 - **Rule name:** reason it exists
 - **Another rule:** its reason
 
-{Verbatim from session artifacts when captured; otherwise reconstructed from code and labeled as such. The bold rule name must be clean — no trailing period, backticks, or other punctuation — and must match each step's **Invariants:** reference verbatim (case-insensitive).}
+{Verbatim from the goal when it states them; otherwise reconstructed from code and labeled as such. The bold rule name must be clean — no trailing period, backticks, or other punctuation — and must match each step's **Invariants:** reference verbatim (case-insensitive).}
 
 ## Dependency graph
 
@@ -181,7 +183,7 @@ graph TD
 **File:** `path/to/file.rs:42`
 **Action:** Create | Modify | Delete | Create File | Patch
 
-**Why:** {One or two sentences. Pull from session notes when available. The human is reading this to understand the design, not to copy code.}
+**Why:** {One or two sentences. Pull from the goal or your build memory when available. The human is reading this to understand the design, not to copy code.}
 
 **Invariants:** {Comma-separated rule names that match the System Invariants headings verbatim, e.g. `Single writer, Confirmed before acked`. Or omit the line.}
 
@@ -393,5 +395,6 @@ Pull from these but tailor to the step. A generic question is a question that fa
 
 | File | Purpose |
 |---|---|
-| `docs/`, commit log | Input, optional. Whatever narrative the session left. Read first. |
-| `replay-guides/{name}.md` | Output. The rebuild path. |
+| `session/goal.md` (or equivalent), commit log | Input, optional. The captured intent. |
+| `session/session-state.md`, `session/progress.md`, `session/scraps.md` | NOT inputs. The trail records the journey; the guide teaches the destination. |
+| `session/replay-guide.md` | Output. The rebuild path. |

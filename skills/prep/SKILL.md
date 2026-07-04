@@ -1,9 +1,9 @@
 ---
 name: prep
-description: Prepare a repo for a Human Replay session — copy it to a disposable sandbox and arm the sandbox guard. Run from the real repo before any exploratory build-out.
+description: Prepare a repo for a Human Replay session: copy it to a disposable sandbox and arm the sandbox guard. Run from the real repo before any exploratory build-out.
 ---
 
-**This skill is activated explicitly.** You are preparing this repository for a sandbox build-out whose result will be replayed by hand. See `human-replay.md` at the plugin repo root for the method.
+**This skill is activated explicitly.** You are preparing this repository for a sandbox build-out whose result will be replayed by hand. See `README.md` at the plugin repo root for the method.
 
 1. Check the repo is in git source control. If not, stop.
 2. Make sure the git workspace is clean. If there are uncommitted files, stop.
@@ -14,7 +14,6 @@ description: Prepare a repo for a Human Replay session — copy it to a disposab
 7. Hand off. Tell the user:
    - Open Claude Code in the sandbox (this terminal stays in the real repo; a new terminal or a reopen both work).
    - Build there however they like — their own agents, skills, and method. This plugin does not prescribe the build-out.
-   - When the work settles, run `/generate-replay-guide` from the sandbox with the base commit. It turns the final state into the replay guide (inline, or in a subagent for a large diff — the skill says how to choose).
-   - Replay the guide in the real repo — by hand, or Tab by Tab with the `human-replay-vscode-extension`.
+   - When the agent(s) are done, the human can use the replay guide to move code to their real repo — by hand, or Tab by Tab with the `human-replay-vscode-extension`.
 
 Then stop. The build-out is not your job.
