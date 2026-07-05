@@ -29,3 +29,10 @@ I use LLMs a lot these days to work faster. There is pressure from clients to sh
 Current industry trend is put the design in PRDs and ADRs and that's enough. Let the agent write the code. But the code *IS* the design. What really happens when we write code is we make thousands of decisions that are *design shaped*. PRDs are only a guide. Don't let agents write the code; Don't let them *design* your software.
 
 We *can* ship really good quality software with LLMs. Just got to do it the right way. That's what human replay is about.
+
+## Adjacent work
+
+- [human-replay-vscode-extension](https://marketplace.visualstudio.com/items?itemName=UtilityDelta.human-replay) - make human replay fun, just hit `tab` and the magic happens.
+- [build-method](https://github.com/utilitydelta/build-method) - the full agentic system as a set of claude `SKILL.md` files that I use with human-replay.
+- [debate-battle](https://github.com/utilitydelta/debate-battle) - the multi-agent debate engine the scout runs goals through.
+- [react-mobx-mvvm](https://github.com/utilitydelta/react-mobx-mvvm) - my opinionated take at how to build front end with agents using MVVM.
