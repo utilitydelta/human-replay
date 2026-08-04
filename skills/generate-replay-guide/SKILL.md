@@ -220,6 +220,10 @@ graph TD
 - Are there edge cases the AI might have missed?
 - Is this the simplest solution, or is there unnecessary complexity?
 
+**Claimed-safe properties:**
+
+- [ ] {For each property this phase claims is unaffected: the command that proves it and the expected number. No runnable check, no claim.}
+
 **Divergence notes:** _______________
 
 ---
@@ -312,6 +316,29 @@ The rules that follow:
    (hand-merging a conflicting doc), actions outside the repo, or anything needing
    judgment rather than bytes.
 
+   **A Patch is residue, never the carrier.** The single worst failure of this format
+   is a whole-file Patch on a grammared file (rule 6) that has NO preceding symbol
+   steps — the Patch becomes the primary carrier for changes that are really new or
+   reworked named items. It line-diffs the whole file against the sandbox, and the
+   human Tabs once to swallow hundreds of unread lines. The comprehension gate is gone,
+   which is the entire point of the replay. It also trips the extension's line-diff
+   size guard and collapses to one file-sized hunk, so the human sees a full-file
+   replace where the guide promised surgical edits.
+
+   The rule: if a grammared file's Patch would carry a whole added or rewritten named
+   item — a `fn`, `struct`, `enum`, `impl`, method, trait, `const`, a test fn, a
+   Markdown section — that item is a `Create`/`Modify` symbol step (rules 3, 4). The
+   Patch that trails those steps sweeps only what has no symbol home: `use`/`mod`
+   wiring, attributes, a const placed by convention, the file's final newline. That
+   residue is small by construction.
+
+   Self-check before you ship, per grammared Patch step: read its target↔sandbox diff.
+   If any hunk adds or replaces a whole named item, or the largest hunk runs past ~40
+   lines, or the validator reports a single hunk on a file of more than a few hundred
+   lines (the size-guard collapse), the file is under-decomposed. Go lift the named
+   items into symbol steps and re-check. Files with no grammar (shell, config, SQL,
+   TOML) are exempt — a whole-file Patch is the only tool they have, and that is fine.
+
 6. **Languages.** The extension replays Rust, C#, TypeScript/JavaScript (tsx/jsx
    included), Python, Markdown, HTML, and CSS. The symbol is the named item in that
    language: fn/struct/enum/etc. (Rust), class/method/property (C#), function/class/
@@ -338,6 +365,12 @@ The rules that follow:
    exact sequential policy. Fix every FAIL and re-run until it prints PASS. A
    guide that never met the validator is a guess.
 
+   PASS is necessary, not sufficient. The validator proves byte-exactness — that
+   the steps rebuild the sandbox file to the byte. It does NOT prove the steps
+   teach. A whole-file Patch carrying an undecomposed 300-line change PASSES (the
+   bytes are exact) while destroying the comprehension gate. Byte-exact is the
+   floor; the decomposition self-check in rule 5 is the ceiling. Run both.
+
 A step with embedded `**Before:**`/`**After:**` fences still works (self-contained
 guide); the file-resolution path is what lets the guide stay lean for a large change.
 
@@ -363,6 +396,10 @@ Good:
 - "Why store the cache in a `HashMap` instead of `BTreeMap`?"
 - "This endpoint accepts untrusted input. What validation is missing?"
 - "Will this query use an index, or will it table scan?"
+
+One shape is banned: "prove X cannot regress" with no oracle attached. A question satisfiable by argument will be satisfied by argument, and the session's own blind spots ride along into the answer. When a phase claims a property is unaffected (throughput, latency, memory), the checkpoint names the command and the expected number: "run the bench; p99 within 5% of baseline". The reader runs it or the claim stays a claim.
+
+The guide inherits the session's settled understanding, including its mistakes. A runnable check is the only checkpoint that can catch what the session itself got wrong.
 
 ### Domain templates (starting points)
 
