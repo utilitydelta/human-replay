@@ -18,13 +18,14 @@ You analyze the final state of a sandbox build-out and produce an ordered guide 
 
 How the sandbox was built is not the guide's concern. One agent or ten, orchestrated or freehand, any method — the guide is built from the final state, the diff, and the goal. It is not a transcript. It is the path a knowledgeable pair programmer would have taken from the start. Skip dead ends. Skip refactoring loops. Teach the destination.
 
-## Five rules
+## Six rules
 
 1. **Optimize the destination, not the journey.** If the session tried A then B, teach B.
 2. **Dependency-first ordering.** Types before functions. Interfaces before implementations. Nothing references something not yet built.
 3. **Cluster by concern.** Group related changes by feature, not file. Humans think in concepts.
 4. **Teach the design, not the code.** The human reads the source themselves. Your job is the *why*.
 5. **Retrospectives are mandatory.** Every step asks questions that force the human to reason about what they just built.
+6. **Red before green.** Nobody learns anything from a test that was green the first time they ran it. If a reproduction or contract test compiles without the fix, it is its own phase and that phase comes first.
 
 ## What goes in, what comes out
 
@@ -103,19 +104,42 @@ Smaller clusters with clear boundaries beat large mixed ones.
 
 ### 5. Order by dependency
 
+Reproduction and contract tests come before the fix they cover, whenever they
+compile without it. The human types the test, runs it, and watches it fail;
+the fix phase is what turns it green. Land the fix in phase 1 and wire its
+tests in phase 8 and the human gets feedback seven phases after the typing,
+having never seen the failure the code exists to prevent.
+
+The test phase's checkpoint asserts the tests are red now, naming the command
+and the expected failure. The fix phase's Verify flips them.
+
+When a test genuinely cannot compile without the fix, say so in the test step's
+Why and order it after. That is a real constraint, not the default.
+
 Topological sort within and across clusters. If you find a cycle, flag it for the human to resolve. Cycles in the dependency graph almost always indicate a missed abstraction.
 
 ### 6. Write the guide
 
 Output to `session/replay-guide.md`. Use the template below.
 
+### 7. Suggest Clips
+
+Use suggest clips skill at the end to ask the developer if they'd like any Manim-built videos that can help explain difficult concepts or new invariants the agent introduced.
+If this is an unattended autonomous session (eg. human is asleep as it's 3am) then just write the suggestions to a suggested-clips.md file in the session instead of waiting for human input.
+
 ## Output template
 
 The guide is read by a technical person mid-replay with no time to waste. Write
-accordingly, and hold these rules for every Why, Overview, and Manual bullet:
+accordingly, and hold these rules for every Why, Overview, invariant reason, and
+Manual bullet:
 
 - Problem first: lead with why the change exists, then what it is. One or two
   sentences per Why; a step earns more length only by what it teaches.
+- Write behavior as control flow, the way a programmer traces it: trigger first,
+  then effect. "If a renewal fails, the node's current lease is untouched", not
+  "The lease a node already holds is untouched by a failed renewal". Prefer
+  if/then/otherwise and cause/effect ordering over state-of-the-world
+  declarations that hide which event produces which outcome.
 - Short paragraphs, no filler, no hedging, no fake balance. State the
   consequence plainly and trust the reader to draw the conclusion.
 - No LLM tics: no "The key insight:", no "It's important to note", no
@@ -123,9 +147,29 @@ accordingly, and hold these rules for every Why, Overview, and Manual bullet:
   the step. End blunt.
 - Retrospectives are ONE probing question that forces reasoning about what was
   just built, not an essay and not a quiz with an obvious answer.
+- Every question carries its answer. A retrospective or checkpoint question is
+  followed by a blank line and a one-line `> **Answer:**` blockquote. The parser
+  takes the question from the `**Retrospective:**` line only, so the blockquote
+  is inert prose and the reader can look away from it on the first pass. Two
+  reasons it is mandatory: a dev who is unsure has no way to self-check
+  otherwise, and writing the answer is a consistency check on you.
 - No big code blocks. Files referenced as `path/to/file.ts:42` so the human can
   ctrl+click. If a step needs more than 5 lines of code to communicate, the Why
   is wrong; rewrite it.
+- One rationale, one place. The full reasoning for a decision lives in exactly
+  one step's Why. Key decisions carries one line and a pointer to that step.
+  An invariant states the rule and its consequence, never the step's reasoning.
+  Three copies drift, and the wrong copy is the one the human reads first.
+- No codenames. Name things by what they do. "Single-flight guard on lease
+  election", not "O3". "The duplicate-write defect", not "DEFECT-1". A session
+  codename may appear once in the Overview as an alias and nowhere else, because
+  it means nothing to the person replaying and forces them to carry a symbol
+  table they never asked for.
+- Verify is runnable here, now. Every Verify bullet is a check the human can run
+  at that step on their own machine: `cargo check`, one test, a curl. Results
+  from a rig they do not have belong in the Why as cited evidence with a pointer
+  to the run report, because a checklist item nobody can run sits unticked
+  forever and teaches them to skip the rest.
 
 ```markdown
 # Replay: {feature-slug}
@@ -187,18 +231,14 @@ graph TD
 
 **Invariants:** {Comma-separated rule names that match the System Invariants headings verbatim, e.g. `Single writer, Confirmed before acked`. Or omit the line.}
 
-**What to write:**
-
-- {Specific signature, type, or function name. Reference existing code: `other/file.rs:88`.}
-- {Another concrete sub-task with file:line links.}
-- {Avoid pasting code blocks larger than 3-5 lines. The human can open the file. Show the *shape*, not the body.}
-
 **Verify:**
 
 - [ ] {Concrete check: "Run `cargo check`", "Open the page and click X", "Curl the endpoint and assert 200"}
 - [ ] {Another}
 
-**Retrospective:** {One step-specific question about a design choice or failure mode this code makes — a single line. The replay tool surfaces it at the step boundary.}
+**Retrospective:** {One step-specific question about a design choice or failure mode this code makes, a single line. The replay tool surfaces it at the step boundary.}
+
+> **Answer:** {one line, the reasoning you expect. Inert prose; the parser reads only the line above.}
 
 {Optional extra questions as bullets below — the human reads them, the tool ignores them:}
 - {Domain-relevant question about edge cases}
@@ -210,15 +250,22 @@ graph TD
 
 **Understanding check:**
 
-- Can you diagram what you just built without looking?
-- Can you explain to a colleague why each piece exists?
-- What would break if you removed any single component?
+- {Phase-specific question about what was just built.}
+  > **Answer:** {one line.}
+- {Another. Tailored to this phase, never the generic three.}
+  > **Answer:** {one line.}
 
 **Design critique:**
 
-- Did the AI's approach feel right, or would you do it differently?
-- Are there edge cases the AI might have missed?
-- Is this the simplest solution, or is there unnecessary complexity?
+- {Question that challenges the shape of this phase's solution.}
+  > **Answer:** {one line, including "the AI was probably right because…" when
+  > that is the honest answer.}
+
+{If this phase is a reproduction or contract-test phase, its first checkpoint
+item is the red assertion:}
+
+- [ ] Run `{command}`. Expect {N} failures: {what fails and why}. Green here
+      means the test is not reproducing the defect.
 
 **Claimed-safe properties:**
 
@@ -252,6 +299,13 @@ The rules that follow:
    root) + `**Action:**`.** No Symbol → the tool can't resolve the step. The diff-replay
    then drives Before→After in place.
 
+   The heading is `### Step N.M: title` and the parser is strict about it:
+   `/^Step\s+([\d.]+):\s*(.*)$/i`. Anything between the number and the colon kills the
+   match, and a section that doesn't match is read as ordinary prose. No error, no FAIL,
+   the step simply isn't in the guide. `### Step 3.2 (OPTIONAL): Mesh sender hook` is
+   the shape that bites. Qualifiers go after the colon. Count the validator's step total
+   against your own headings before you ship; this is the one defect PASS cannot see.
+
 2. **Steps are the per-symbol delta of target↔sandbox, not the sandbox's git log.** The
    target may already contain some of the sandbox's work, or have drifted. For each
    symbol the sandbox changed, compare it to the *target's* current version:
@@ -261,6 +315,15 @@ The rules that follow:
    - differs → **Modify**.
    Build the steps from this comparison. Generate from `git diff {base}..HEAD` to find
    *which* symbols moved, then re-classify each against the target before emitting it.
+
+   `differs` does not always mean the sandbox is right. On a partial replay, which is
+   the normal case for a sandbox the human works through over several sittings, they
+   have already taken some of this work and improved it: better docs, a file moved,
+   a name fixed. The sandbox is then the older version. Emitting a Modify there is a
+   regression wearing a replay step's clothes. Read the direction of any `differs`
+   whose file the human has plausibly already touched, and when the target is ahead,
+   drop the symbol and say so in the Scope section. Timestamps and the target's git
+   log settle it faster than reading both bodies.
 
 3. **Modify/Delete/Create all address any named item.** The resolver finds functions,
    impl methods, structs, enums, unions, consts, statics, type aliases, traits, modules,
@@ -274,6 +337,18 @@ The rules that follow:
    manual bullet, a Patch step sits in the counter like any other. A whole-symbol
    field/variant addition reads as a Modify of its struct/enum — prefer that over a
    Create when the container already exists.
+
+   Container-aware placement needs the container to already exist. Create a brand-new
+   type and its methods are unreachable in the same guide: the struct resolves, then
+   every method under it fails with `placement blocked — container 'impl Foo' not found
+   in the target file`, because the Create step that would make the container has not
+   run at validate time. New Rust types with `impl` blocks and new C# classes with
+   members both land here. This is the documented exception to rule 5: create the type
+   as its own symbol step, then let the `impl` blocks ride the file's trailing Patch.
+   Two blocks and a `Drop` impl is a small enough hunk to stay teachable, and the
+   alternative (a `Create File`) does not exist when you are adding a type to a file
+   that is already there. Put the mechanism in that Patch step's Why, since the human
+   is now reading two blocks in one Tab instead of one each.
 
 4. **Brand-new files: one `Create File` step per teaching moment — decompose when
    there is more than one.** The engine owns the gesture grain (a create-file
@@ -365,6 +440,12 @@ The rules that follow:
    exact sequential policy. Fix every FAIL and re-run until it prints PASS. A
    guide that never met the validator is a guess.
 
+   Go and look for that checkout before you conclude it isn't here. `find ~ -maxdepth 4
+   -name validate-guide.js` costs one call. Guides ship with an "unvalidated, sorry"
+   banner at the top far more often than the extension is genuinely missing, and a
+   banner is not a substitute for the oracle. If it really is absent, say so in the
+   guide and keep the banner.
+
    PASS is necessary, not sufficient. The validator proves byte-exactness — that
    the steps rebuild the sandbox file to the byte. It does NOT prove the steps
    teach. A whole-file Patch carrying an undecomposed 300-line change PASSES (the
@@ -404,6 +485,10 @@ The guide inherits the session's settled understanding, including its mistakes. 
 ### Domain templates (starting points)
 
 Pull from these but tailor to the step. A generic question is a question that fails.
+
+Every one of these carries a `> **Answer:**` line underneath. If you cannot
+write the answer in one line, you do not understand the step well enough to ask
+about it yet, and that is the signal to go back to the code.
 
 **Frontend:** re-render behavior, state ownership, accessibility, error states, loading states, network failure modes.
 
