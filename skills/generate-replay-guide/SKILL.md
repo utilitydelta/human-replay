@@ -147,12 +147,13 @@ Manual bullet:
   the step. End blunt.
 - Retrospectives are ONE probing question that forces reasoning about what was
   just built, not an essay and not a quiz with an obvious answer.
-- Every question carries its answer. A retrospective or checkpoint question is
-  followed by a blank line and a one-line `> **Answer:**` blockquote. The parser
-  takes the question from the `**Retrospective:**` line only, so the blockquote
-  is inert prose and the reader can look away from it on the first pass. Two
-  reasons it is mandatory: a dev who is unsure has no way to self-check
-  otherwise, and writing the answer is a consistency check on you.
+- Every question carries its answer, and a step's retrospective carries two
+  distractors as well: a `> **Answer:**` line and exactly two
+  `> **Distractor:**` lines. Checkpoint questions keep the bare answer, since
+  the tool gates per step and not per phase. The tool shuffles a step's three
+  choices and stands them between the finished step and the next one: the human
+  picks before anything else lands. The answer key is not inert prose any more,
+  it is the gate. One distractor, or three, is a parse error naming your step.
 - No big code blocks. Files referenced as `path/to/file.ts:42` so the human can
   ctrl+click. If a step needs more than 5 lines of code to communicate, the Why
   is wrong; rewrite it.
@@ -236,9 +237,11 @@ graph TD
 - [ ] {Concrete check: "Run `cargo check`", "Open the page and click X", "Curl the endpoint and assert 200"}
 - [ ] {Another}
 
-**Retrospective:** {One step-specific question about a design choice or failure mode this code makes, a single line. The replay tool surfaces it at the step boundary.}
+**Retrospective:** {One step-specific question about a design choice or failure mode this code makes, a single line. The replay tool asks it before the next step can run.}
 
-> **Answer:** {one line, the reasoning you expect. Inert prose; the parser reads only the line above.}
+> **Answer:** {one line, the reasoning you expect. At most 100 characters.}
+> **Distractor:** {one line, a belief a careless reader would hold. At most 100 characters.}
+> **Distractor:** {a different wrong belief, not a restatement of the first.}
 
 {Optional extra questions as bullets below — the human reads them, the tool ignores them:}
 - {Domain-relevant question about edge cases}
@@ -436,9 +439,24 @@ The rules that follow:
    your `human-replay-vscode-extension` checkout)
 
    It parses with the real parser, resolves every step's bytes from both trees,
-   flags duplicate-name hazards, and replays every Modify through the engine's
-   exact sequential policy. Fix every FAIL and re-run until it prints PASS. A
-   guide that never met the validator is a guess.
+   flags duplicate-name hazards, replays every Modify through the engine's exact
+   sequential policy, and audits your answer keys. Fix every FAIL and re-run
+   until it prints PASS. A guide that never met the validator is a guess.
+
+   The last line before the verdict is the answer-key count:
+
+   ```
+   retrospectives: 12 gated, 1 wired (`none`), 0 ungated, 0 weak, 0 over-length
+   ```
+
+   Read it. `ungated` is a step you left without distractors, `weak` is a step
+   whose question was too generic to gate, and `over-length` is a step whose
+   choices break the cap or the spread. A guide with any of those is not
+   finished, even when the byte replay passes: an ungated step is a step the
+   human tabs through without stopping, which is the thing the gate exists to
+   prevent. `wired` is the only non-gating count that is allowed to stand, and
+   only for a step where you deliberately wrote `none` because there is genuinely
+   nothing to ask.
 
    Go and look for that checkout before you conclude it isn't here. `find ~ -maxdepth 4
    -name validate-guide.js` costs one call. Guides ship with an "unvalidated, sorry"
@@ -478,6 +496,50 @@ Good:
 - "This endpoint accepts untrusted input. What validation is missing?"
 - "Will this query use an index, or will it table scan?"
 
+### Distractor craft
+
+A distractor is a belief a careless reader would hold after skimming this code.
+Not a joke, not an obvious absurdity, not "none of the above". It has to be the
+thing someone who read the diff and not the design would actually say.
+
+The direction matters and it is easy to get backwards. The Why explains the
+code. The code refutes the distractor. A reader who opened the file this step
+touched can rule each distractor out from the bytes in front of them; that is
+the whole test.
+
+Rules:
+
+- One line each, at most 100 characters after the label.
+- The three choices sit within 30 characters of each other. In machine-written
+  multiple choice the correct answer is reliably the longest and the most
+  qualified, and a reader learns that tell in about four questions. Take it away
+  and the gate asks about the code instead of about your prose.
+- Two distractors, never one, never three. The tool parses anything else as a
+  guide bug.
+- Two distinct wrong beliefs. Two phrasings of the same claim tell the reader
+  both are wrong, which hands them the answer.
+- Never a second correct answer. This is the failure no validator catches: read
+  your three choices back against the landed code and confirm exactly one
+  survives.
+- A weak question gets no distractors. If the best you can ask is "does this
+  make sense?", the tool refuses to gate the step and the validator FAILs the
+  guide. Do not shorten the question to slip past the check. The smell is real:
+  it says you could not name why this code exists, and the way through is a
+  specific question, not a cheaper one.
+
+Worked example:
+
+```markdown
+**Retrospective:** Why can `align_down` never overflow where `align_up` can?
+
+> **Answer:** It only masks bits off, which never increases the value.
+> **Distractor:** Bitwise ops are exempt from debug overflow checks.
+> **Distractor:** It takes a `u32`, so the sum cannot reach `u64::MAX`.
+```
+
+Both distractors are things a reader might believe about Rust. Both die on the
+function body.
+
 One shape is banned: "prove X cannot regress" with no oracle attached. A question satisfiable by argument will be satisfied by argument, and the session's own blind spots ride along into the answer. When a phase claims a property is unaffected (throughput, latency, memory), the checkpoint names the command and the expected number: "run the bench; p99 within 5% of baseline". The reader runs it or the claim stays a claim.
 
 The guide inherits the session's settled understanding, including its mistakes. A runnable check is the only checkpoint that can catch what the session itself got wrong.
@@ -486,9 +548,9 @@ The guide inherits the session's settled understanding, including its mistakes. 
 
 Pull from these but tailor to the step. A generic question is a question that fails.
 
-Every one of these carries a `> **Answer:**` line underneath. If you cannot
-write the answer in one line, you do not understand the step well enough to ask
-about it yet, and that is the signal to go back to the code.
+Every one of these carries an answer key underneath. If you cannot write the
+answer in one line, you do not understand the step well enough to ask about it
+yet, and that is the signal to go back to the code.
 
 **Frontend:** re-render behavior, state ownership, accessibility, error states, loading states, network failure modes.
 
