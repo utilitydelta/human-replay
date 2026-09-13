@@ -24,7 +24,7 @@ How the sandbox was built is not the guide's concern. One agent or ten, orchestr
 2. **Dependency-first ordering.** Types before functions. Interfaces before implementations. Nothing references something not yet built.
 3. **Cluster by concern.** Group related changes by feature, not file. Humans think in concepts.
 4. **Teach the design, not the code.** The human reads the source themselves. Your job is the *why*.
-5. **Retrospectives are mandatory.** Every step asks questions that force the human to reason about what they just built.
+5. **One question per decision, not one per step.** A step that makes a decision asks about it. A step that applies a decision already made does not. See "When not to ask".
 6. **Red before green, when the shape allows it.** Nobody learns anything from a test that was green the first time they ran it. A reproduction or contract test that compiles without the fix is its own phase, and that phase comes first. Code whose shape is still moving does not get contorted to fit — see rule 5. Nothing validates this; it is your call, every time.
 
 ## What goes in, what comes out
@@ -247,7 +247,7 @@ graph TD
 - [ ] {Concrete check: "Run `cargo check`", "Open the page and click X", "Curl the endpoint and assert 200"}
 - [ ] {Another}
 
-**Retrospective:** {One step-specific question about a design choice or failure mode this code makes, a single line. The replay tool asks it before the next step can run.}
+**Retrospective:** {One step-specific question about a design choice or failure mode this code makes, a single line. The replay tool asks it before the next step can run. Or `none — the decision is step {N.M}` for a step that applies a decision an earlier step already made, and for a mechanical step with nothing to decide; then drop the three lines below entirely.}
 
 > **Answer:** {one line, the reasoning you expect. At most 100 characters.}
 > **Distractor:** {one line, a belief a careless reader would hold. At most 100 characters.}
@@ -463,11 +463,15 @@ The rules that follow:
    Read it. `ungated` is a step you left without distractors, `weak` is a step
    whose question was too generic to gate, and `over-length` is a step whose
    choices break the cap or the spread. A guide with any of those is not
-   finished, even when the byte replay passes: an ungated step is a step the
-   human tabs through without stopping, which is the thing the gate exists to
-   prevent. `wired` is the only non-gating count that is allowed to stand, and
-   only for a step where you deliberately wrote `none` because there is genuinely
-   nothing to ask.
+   finished, even when the byte replay passes: an ungated step left a question
+   standing that will never be asked, and a weak one says you could not name why
+   the code exists.
+
+   `wired` is the count for the steps you deliberately wrote `none` on, and on a
+   guide with any repeat runs in it that number should be large. A guide where
+   every step gates has not been read back ("When not to ask"). What the audit
+   cannot tell you is whether the gates you kept are the right ones, so do that
+   pass yourself.
 
    Go and look for that checkout before you conclude it isn't here. `find ~ -maxdepth 4
    -name validate-guide.js` costs one call. Guides ship with an "unvalidated, sorry"
@@ -542,6 +546,47 @@ Good:
 - "Why store the cache in a `HashMap` instead of `BTreeMap`?"
 - "This endpoint accepts untrusted input. What validation is missing?"
 - "Will this query use an index, or will it table scan?"
+
+### When not to ask
+
+A gate works because it is rare. Twenty in a row and the human stops reading the
+code and starts reading the three options for the longest one, which is the exact
+skim the gate exists to prevent. Over-gating does not add rigour, it spends it.
+
+Write `**Retrospective:** none` on any step in these shapes.
+
+**The repeat run.** One decision applied to N call sites. You can see it in your
+own output before you see it in the code: the steps share an invariant tag, their
+Whys share a root cause, and the diffs are the same edit with different
+identifiers. Route the length through the checked conversion, in seven writers.
+Pin the protocol version, in two loops.
+
+The run gets one question, on the step where the decision is visible, and it asks
+about the pattern rather than the call site. Why this shape. What breaks at the
+call site you forget. Why the check belongs at this layer and not one below. Then
+every following step in the run writes `none — the decision is step 1.3`.
+
+Asking per call site is worse than not asking, because the questions have to
+differ to look like questions, so you invent distinctions the code does not make
+and the human learns a difference that is not there.
+
+**Steps with nothing to decide.** Import wiring. Trait impls the compiler
+dictates. A doc line brought back in step with the behaviour. A residue Patch. A
+rename. If you had been at the keyboard you would not have paused here, so do not
+make the human pause.
+
+Both cases keep everything else. The Why still earns its sentence and the panel
+still shows it, the Verify still runs, the dwell still holds the human on the code
+they just landed. `none` removes the quiz, not the teaching.
+
+**The self-check before you ship.** Read a phase's gated questions in a row with
+the code closed. If two of them have the same answer, you had one decision and
+asked it twice. If one of them is answerable without having read the step, it was
+never a gate. Cut both and the phase gets sharper, not thinner.
+
+The validator counts `wired` for every step you wire off. A phase of mechanical
+edits with one gate at its head is a well-built phase, and the count says so;
+`ungated` and `weak` are the two that mean you could not say why the code exists.
 
 ### Distractor craft
 
