@@ -25,7 +25,7 @@ How the sandbox was built is not the guide's concern. One agent or ten, orchestr
 3. **Cluster by concern.** Group related changes by feature, not file. Humans think in concepts.
 4. **Teach the design, not the code.** The human reads the source themselves. Your job is the *why*.
 5. **Retrospectives are mandatory.** Every step asks questions that force the human to reason about what they just built.
-6. **Red before green.** Nobody learns anything from a test that was green the first time they ran it. If a reproduction or contract test compiles without the fix, it is its own phase and that phase comes first.
+6. **Red before green, when the shape allows it.** Nobody learns anything from a test that was green the first time they ran it. A reproduction or contract test that compiles without the fix is its own phase, and that phase comes first. Code whose shape is still moving does not get contorted to fit — see rule 5. Nothing validates this; it is your call, every time.
 
 ## What goes in, what comes out
 
@@ -111,10 +111,20 @@ tests in phase 8 and the human gets feedback seven phases after the typing,
 having never seen the failure the code exists to prevent.
 
 The test phase's checkpoint asserts the tests are red now, naming the command
-and the expected failure. The fix phase's Verify flips them.
+and the expected failure as a `- [ ]` task. The extension surfaces those tasks
+in the panel at the phase pause, so that is the line the human reads before
+they go and run it. The fix phase's Verify flips them.
 
-When a test genuinely cannot compile without the fix, say so in the test step's
-Why and order it after. That is a real constraint, not the default.
+A bug fix is the case this works on: the defect exists, so the test that
+witnesses it compiles today. Order those first.
+
+New code and refactors are usually not that case, and forcing them into it
+makes a worse guide. The shape is still moving — a test written against a
+signature the next phase rewrites teaches the human a signature that does not
+survive the session. Do not reach for the stub-the-signature, then test, then
+implement dance either. It replays as three passes over one function and the
+human loses the thread of what they are building. Order the tests after, say
+why in the test step's Why, and let the checkpoint check them green.
 
 Topological sort within and across clusters. If you find a cycle, flag it for the human to resolve. Cycles in the dependency graph almost always indicate a missed abstraction.
 
@@ -268,7 +278,8 @@ graph TD
 item is the red assertion:}
 
 - [ ] Run `{command}`. Expect {N} failures: {what fails and why}. Green here
-      means the test is not reproducing the defect.
+      means the test is not reproducing the defect. Step through it — the code
+      is under your cursor and you have a debugger.
 
 **Claimed-safe properties:**
 
@@ -469,6 +480,22 @@ The rules that follow:
    teach. A whole-file Patch carrying an undecomposed 300-line change PASSES (the
    bytes are exact) while destroying the comprehension gate. Byte-exact is the
    floor; the decomposition self-check in rule 5 is the ceiling. Run both.
+
+8. **A phase's `### CHECKPOINT:` block is parsed, and only its `- [ ]` lines are.**
+   The extension stops at every phase boundary already. The checkpoint is what that
+   stop says: its task lines land in the Replay Guide panel and its first task lands
+   in the toast, so write the one that matters first. Everything else in the block —
+   the understanding-check bullets, the design critique, the answers in their
+   blockquotes — stays in the markdown on purpose, because a panel that renders an
+   answer hands it over before the human has thought about the question. Put nothing
+   in a `- [ ]` line that you would not want read out at the boundary, and nothing in
+   the block's prose that the human needs in order to act.
+
+   The extension will not run any of it. No terminal, no test run, no debugger
+   attach. The human is sitting in the files they just typed with their own runner
+   and their own breakpoints; a checkpoint that runs itself is a checkpoint they
+   watched instead of did. Write the task as an instruction to a person, naming the
+   command, not as something a tool is about to execute for them.
 
 A step with embedded `**Before:**`/`**After:**` fences still works (self-contained
 guide); the file-resolution path is what lets the guide stay lean for a large change.
