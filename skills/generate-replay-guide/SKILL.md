@@ -491,6 +491,26 @@ The rules that follow:
    in a `- [ ]` line that you would not want read out at the boundary, and nothing in
    the block's prose that the human needs in order to act.
 
+   Four rules on the task line itself, each one a shape the parser will not carry:
+
+   - **One bullet, one task, and the command and its number both sit on it.** A task
+     may wrap across indented continuation lines; its sub-bullets are not carried.
+     `- [ ] Run the bench. Expect:` with the thresholds hanging under it as sub-bullets
+     reaches the human as `Run the bench. Expect:` and nothing else.
+   - **No answer under a task.** A `> **Answer:**` line ends the task above it and is
+     dropped. Hang answers off the plain `-` question bullets, the way the template
+     does, never off a `- [ ]`.
+   - **Fenced blocks are samples, not tasks.** Expected output belongs in a fence, and
+     nothing inside one is carried, including a line that reads `- [ ]`. The fence also
+     ends the task above it, so put it after the task, not in the middle.
+   - **Write `- [ ]`, never `- [x]`.** A ticked item is dropped. The panel counts what
+     it holds and calls all of it outstanding, so a pre-ticked box would be the tool
+     telling the human to run something you already ran.
+
+   Two checkpoints keyed to the same phase is a parse error, not a merge. Only a
+   `## Phase` heading moves the key, so a `### CHECKPOINT:` under `## Closing` keys to
+   the last phase and collides with that phase's own.
+
    The extension will not run any of it. No terminal, no test run, no debugger
    attach. The human is sitting in the files they just typed with their own runner
    and their own breakpoints; a checkpoint that runs itself is a checkpoint they
