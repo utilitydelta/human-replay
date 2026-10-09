@@ -94,6 +94,20 @@ An explainer that is confidently wrong is worse than none, and confidently wrong
 
 The API is large and the docs are thin, but the source is right there and grep is fast. Reading it beats guessing, and it beats a failed render by a mile. `references/pipeline.md` has the map of which file answers which question, plus the trick of confirming a batch of class names with one `hasattr` sweep before you depend on them.
 
+## Narration voice
+
+Write it the way an engineer explains it to a peer at the next desk: casual, plain, direct. Think of an Australian colleague talking it through, without the dialect or the slang. The default model voice, long sentences with fronted clauses and colon chains, is close to impossible to follow by ear.
+
+- Subject, verb, object. One idea per sentence, mostly 6 to 16 words.
+- Name the thing, then say what it does. "The planner refuses it", not "it is refused by the planner".
+- No inverted or fronted constructions: not "What breaks is the header", "Gone are the entries", "Enter the barrier", "Here's the thing:", "It's not X, it's Y".
+- No colon chains, no stacked commas, no asides in the middle of a sentence. No fragments for drama ("Acknowledged writes, quietly removed.").
+- Say "you" to the listener and "we" for the system. Contractions are fine.
+- A number gets its own short sentence when it matters.
+
+Before: "An update whose barrier is below the picked header's is refused, as barrier lowered, forty three to forty one, before any effect, for one comparison per header write."
+After: "So the planner gets a ratchet. If an update's barrier is lower than the picked header's, the planner refuses it. That's the barrier lowered error. It costs one compare per header write."
+
 ## Narration is NOT optional
 
 Humans have their eyes on the animation, not the subtitles. They listen with ears and watch animations with eyes.

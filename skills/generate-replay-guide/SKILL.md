@@ -394,6 +394,48 @@ The rules that follow:
      byte-exact — a missing symbol step or a missing trailing Patch is a FAIL,
      not a surprise at the keyboard.
 
+   **Wire before you write.** The human's IDE teaches alongside the guide: hover
+   types, go-to-definition, completion, red squiggles on a wrong call. It does
+   nothing for a file the build cannot see, and a human who types three files
+   blind before the `mod` line lands gets none of it. Every file the guide edits
+   must be reachable from the build before its first symbol step. In order:
+
+   1. **Manifest first.** A new dependency, package, project reference or
+      workspace member (`Cargo.toml`, `.csproj`, `package.json`,
+      `pyproject.toml`, `tsconfig.json`) lands before any file that uses it. A
+      whole-file Patch on the manifest is fine: it has no grammar.
+   2. **Skeleton.** `Create File` with the imports and the module frame only
+      (rule 4). Every import in it must resolve at that step: name only items
+      that already exist, or move the import to the step that makes them.
+   3. **Wire it, up the chain.** The very next step declares the file in its
+      parent, and the parent in its parent if that is new too, until the chain
+      reaches something already compiled. A new module root is created
+      declaring only the children that exist so far; each later child gets its
+      declaration as a `Create` step straight after its own `Create File`.
+   4. **Then the symbols**, in dependency order.
+
+   What step 3 means per language:
+
+   | Language | Wiring |
+   |---|---|
+   | Rust | `mod x;` in the parent (`mod.rs`, `lib.rs`, `main.rs`), recursively; `#[cfg(test)] mod tests;` for a test file |
+   | C# | Nothing for SDK-style projects (they glob). An old-style `.csproj` needs `<Compile Include>`; a new project needs its `.sln` and `<ProjectReference>` entries first |
+   | TS/JS | Nothing to compile, but a file outside `include` or `references` gets no type checking: fix `tsconfig.json` first. A barrel `index.ts` export comes after the file exists |
+   | Python | `__init__.py` for a new package directory, before the first module in it |
+
+   Imports into a file that already exists are the hard case. A Patch serves
+   the whole remaining sandbox diff of its file, so an import-only Patch placed
+   before the symbol steps would sweep them in. When the file's change is
+   imports plus one small item (under ~40 lines), use one Patch whose hunks run
+   in file order: the import Tabs in first, then the item. For anything larger,
+   keep the symbol steps and the trailing Patch, and say in the first symbol
+   step's Why which import is still missing, so the red squiggle is expected
+   rather than alarming.
+
+   Self-check: walk the steps in order and, for each one, ask whether the file it
+   edits is reachable from the crate root or project file at that moment, and
+   whether every import it relies on already exists. A "no" is a reorder.
+
 5. **Everything below symbol grain rides a per-file `**Action:** Patch` step.** A Patch
    step names only a `**File:**`; at replay the tool line-diffs the live target file
    against the sandbox file and serves each remaining hunk on the Tab surface — import
@@ -401,7 +443,8 @@ The rules that follow:
    is a convention ("after the imports"), and whole files in languages with no grammar
    (shell, config, SQL). Emit one Patch step per file, ORDERED AFTER all of that file's
    symbol steps (an early Patch would sweep later steps' hunks in with it — correct but
-   unreadable). Reserve **## Manual steps** for what even a Patch can't do: decisions
+   unreadable). The one exception is rule 4's imports-first Patch on an existing file,
+   and module wiring, which is its own `Create` step and never waits for the end. Reserve **## Manual steps** for what even a Patch can't do: decisions
    (hand-merging a conflicting doc), actions outside the repo, or anything needing
    judgment rather than bytes.
 

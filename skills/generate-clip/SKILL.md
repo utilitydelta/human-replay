@@ -187,9 +187,23 @@ picture means.
 
 `beat()` stretches the motion to play out across the sentence rather than
 snapping done, and whatever is left after the motion is the window where the
-viewer takes it in. If a beat feels rushed the sentence is too short, so write a
-longer one. If it drags, cut words. Editing the narration is how you edit the
+viewer takes it in. If a beat feels rushed, add another short
+sentence; never make one sentence longer. If it drags, cut words. Editing the narration is how you edit the
 timing.
+
+## Narration voice
+
+Write it the way an engineer explains it to a peer at the next desk: casual, plain, direct. Think of an Australian colleague talking it through, without the dialect or the slang. The default model voice, long sentences with fronted clauses and colon chains, is close to impossible to follow by ear.
+
+- Subject, verb, object. One idea per sentence, mostly 6 to 16 words.
+- Name the thing, then say what it does. "The planner refuses it", not "it is refused by the planner".
+- No inverted or fronted constructions: not "What breaks is the header", "Gone are the entries", "Enter the barrier", "Here's the thing:", "It's not X, it's Y".
+- No colon chains, no stacked commas, no asides in the middle of a sentence. No fragments for drama ("Acknowledged writes, quietly removed.").
+- Say "you" to the listener and "we" for the system. Contractions are fine.
+- A number gets its own short sentence when it matters.
+
+Before: "An update whose barrier is below the picked header's is refused, as barrier lowered, forty three to forty one, before any effect, for one comparison per header write."
+After: "So the planner gets a ratchet. If an update's barrier is lower than the picked header's, the planner refuses it. That's the barrier lowered error. It costs one compare per header write."
 
 ## Craft, in clipkit terms
 

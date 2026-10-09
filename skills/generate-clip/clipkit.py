@@ -339,7 +339,8 @@ def lint(scene, min_text_height=0.16, allow_overlap=()):
                 problems.append(f"text too small to read: {txt.text[:34]!r} "
                                 f"height {txt.height:.3f} < {min_text_height}")
 
-    texts = [m for m in tops if isinstance(m, Text) and id(m) not in excused]
+    # ManimCE can list one object twice at top level after TransformFromCopy; compare each object once
+    texts = list({id(m): m for m in tops if isinstance(m, Text) and id(m) not in excused}.values())
     for i, a in enumerate(texts):
         for b_ in texts[i + 1:]:
             al, ar, ab, at_ = _bbox(a)
