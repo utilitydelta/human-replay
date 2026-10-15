@@ -6,7 +6,7 @@ description: Build one Manim clip (1-5min duration) for an invariant trace or a 
 # Generate Clip
 
 One clip, one idea, 1-5min each. Called by `suggest-clips` with a written
-trace or a set of bug-story beats already in `session/clips/<slug>.md`. Do not
+trace or a set of bug-story beats already in `session/media/clips/<slug>.md`. Do not
 re-derive the content here. Your job is to put it on screen and prove it landed.
 
 Clip time is flexible, better to be complete, clear and correct than ambiguous or leave out important details.
@@ -249,14 +249,14 @@ The clipkit realisations of the claim forms that recur here:
 
 ## Output
 
-Everything for one clip lands in `session/clips/`:
+Everything for one clip lands in `session/media/clips/`, beside the other presentation media (`media/diagrams/`, `media/podcast/`):
 
 - `<slug>.md` the brief, written by `suggest-clips`
 - `<slug>.py` the scene, so the human can re-render or fix it without you
 - `<slug>.mp4` the clip, narration muxed in
 - `<slug>.srt` the subtitles
 
-Work in a scratch directory, not in `session/clips/`, and copy the four files
-across when the clip is done. The build leaves `voice/`, `media/` and `.clipenv`
+Work in a scratch directory, not in `session/media/clips/`, and copy the four files
+across when the clip is done. The build leaves `voice/`, manim's own `media/` render folder and `.clipenv`
 behind; none of them belong in the session output and all of them die with the
 sandbox.

@@ -145,7 +145,7 @@ guide is not worse for it.
 
 ## Output
 
-Selections go to `session/clips/` as one `<slug>.md` per clip, holding the trace
+Selections go to `session/media/clips/` as one `<slug>.md` per clip, holding the trace
 or the five beats, the invariant or defect it anchors to, and the run the
 numbers came from. `generate-clip` reads these and nothing else, so anything the
 clip needs to be true has to be written down here first.

@@ -46,8 +46,8 @@ One diagram, one question, one relationship kind. A second kind is a second diag
 
 ## Building one
 
-1. Copy `scripts/excali.py` into the session's `diagrams/` folder, beside the spec.
-2. Write `diagrams/<name>.py`: the docstring holds the question, the relationship and the evidence the arrows and numbers come from, by file or doc. Build `els` with `node`, `lane`, `axis`, `link`, `note` and `key`, then call `write("<name>", els)`.
+1. Copy `scripts/excali.py` into the session's `media/diagrams/` folder, beside the spec.
+2. Write `media/diagrams/<name>.py`: the docstring holds the question, the relationship and the evidence the arrows and numbers come from, by file or doc. Build `els` with `node`, `lane`, `axis`, `link`, `note` and `key`, then call `write("<name>", els)`.
 3. Run `python3 <name>.py` (not `-I`: it imports excali from its own folder). `write` runs `check` and exits 1 on any problem:
    - a node label longer than four words or two lines (make it a note);
    - a node bigger than 300 by 120 (a block, not a node);
@@ -58,9 +58,9 @@ One diagram, one question, one relationship kind. A second kind is a second diag
    - more than one colour with no `key()`.
 4. Look at it: render `<name>.view.json` with the Excalidraw MCP `create_view` if it is available. Fix what reads badly even if `check` passed: a crossing leader line, a note far from its node, an arrow whose meaning is not obvious.
 5. **Verify the arrows.** `check` proves the picture is readable, not that it is true. AI diagrams fail on meaning: an invented step, swapped yes and no branches, an arrow nobody can justify. A wrong arrow is worse here than in prose, because the human reads the diagram before typing and steers by it. `write` emits `<name>.claims.md`: the docstring, then every arrow as `from -verb-> to` and every note as one line. Hand that file and the evidence the docstring names to a fresh subagent that never saw the spec. For each line it answers OK, UNSUPPORTED (no source says it), WRONG (a source says otherwise) or MISSING (a step or branch the evidence has and the picture skips), with the source text that settles it. Fix the spec, rerun, re-verify the changed lines, until no row remains.
-6. Commit the spec, `excali.py`, the `.excalidraw`, the `.view.json` and the `.claims.md`. The `.excalidraw` opens at excalidraw.com or in the VS Code Excalidraw extension.
+6. Keep the spec, `excali.py`, the `.excalidraw`, the `.view.json` and the `.claims.md` together in `media/diagrams/`, and commit them if the repo tracks session media. The `.excalidraw` opens at excalidraw.com or in the VS Code Excalidraw extension.
 
-Keep a short `diagrams/README.md`: one line per diagram, its question, and the guide phase or step it belongs to.
+Keep a short `media/diagrams/README.md`: one line per diagram, its question, and the guide phase or step it belongs to.
 
 ## When reviewing existing diagrams
 
