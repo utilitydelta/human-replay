@@ -18,14 +18,16 @@ You analyze the final state of a sandbox build-out and produce an ordered guide 
 
 How the sandbox was built is not the guide's concern. One agent or ten, orchestrated or freehand, any method — the guide is built from the final state, the diff, and the goal. It is not a transcript. It is the path a knowledgeable pair programmer would have taken from the start. Skip dead ends. Skip refactoring loops. Teach the destination.
 
-## Six rules
+## Seven rules
 
 1. **Optimize the destination, not the journey.** If the session tried A then B, teach B.
 2. **Dependency-first ordering.** Types before functions. Interfaces before implementations. Nothing references something not yet built.
 3. **Cluster by concern.** Group related changes by feature, not file. Humans think in concepts.
 4. **Teach the design, not the code.** The human reads the source themselves. Your job is the *why*.
 5. **One question per decision, not one per step.** A step that makes a decision asks about it. A step that applies a decision already made does not. See "When not to ask".
-6. **Red before green, when the shape allows it.** Nobody learns anything from a test that was green the first time they ran it. A reproduction or contract test that compiles without the fix is its own phase, and that phase comes first. Code whose shape is still moving does not get contorted to fit — see rule 5. Nothing validates this; it is your call, every time.
+6. **Red before green.** Nobody learns anything from a test that was green the first time they ran it. A bug fix gets its reproduction phase first. New code goes outside-in: types, compiling shells, red tests, the caller, then the bodies that turn the tests green (§5).
+7. **Phases are units.** Each phase is one replay unit, held to the budget in §4b. How much there is to replay was decided when the build was scoped; the guide slices what exists and never grows it.
+8. **Every phase ends on a commit.** At each phase boundary the tree compiles, and every test that was green before the phase is still green, so the human can stop, commit, and open a PR there. Tests go red and green inside the same phase: no phase ends with a red test, and no phase is only tests for code typed earlier. A phase that leaves the tree broken or red is cut wrong.
 
 ## What goes in, what comes out
 
@@ -102,31 +104,194 @@ Group changes by what they are, not what file they live in. A feature spanning m
 
 Smaller clusters with clear boundaries beat large mixed ones.
 
+### 4b. Cut the guide into replay units
+
+Why units? Guides of 20 phases and several hundred steps did not land in a
+sitting, and the human typed a module for hours before seeing one call into
+it. The replays that landed in one go ran about 20 steps.
+
+Every `## Phase` is a unit, and a unit is one sitting:
+
+- 15 to 25 steps. Read, comment and rule steps count; they take time too.
+- About 150 typed lines (the validator counts non-blank lines each step adds).
+- At most 4 new types.
+- One module, named in `**Module:**`. Its tests and the caller view may sit elsewhere.
+- It ends on a frozen public contract, with its walkthrough test and its own
+  tests inside the unit, never in trailing test phases.
+
+Declare the kind under the phase heading: `**Unit:** component | closing |
+delta`.
+
+- **component**: one component outside in, ending green: types, shells, red
+  tests, the caller view, then the bodies that turn the tests green.
+- **closing**: a module the human already typed, revisited once (§5c).
+- **delta**: a change to code already replayed: a bug fix, typed debt, a
+  planned reopen.
+
+A component too big for one unit is sliced, and every slice is a full
+outside-in pass that ends green: by public function, by state machine or by
+public type, never by "first half of the functions" and never by layer (all
+the shells in one phase, all the bodies in the next). The older `contract` and
+`internals` kinds still parse, but a contract phase ends red and fails the
+validator.
+
+The validator measures every phase and FAILs one over 25 steps, 150 typed
+lines or 4 new types, naming the number that broke. Split the unit and re-run.
+Do not trim a unit by moving its tests or its bodies to a later one.
+
 ### 5. Order by dependency
 
-Reproduction and contract tests come before the fix they cover, whenever they
-compile without it. The human types the test, runs it, and watches it fail;
-the fix phase is what turns it green. Land the fix in phase 1 and wire its
-tests in phase 8 and the human gets feedback seven phases after the typing,
-having never seen the failure the code exists to prevent.
+**A bug fix: red first.** The reproduction test comes before the fix, because
+the defect exists and the test that witnesses it compiles today. The human
+types the test, runs it, and watches it fail; the fix is what turns it green.
+The red step carries `**Red:** <test names>`, the fix step `**Green:** <test
+names>`, and the checkpoint's first `- [ ]` task names the command and the
+expected failures. Land the fix first and wire its tests seven phases later
+and the human never sees the failure the code exists to prevent.
 
-The test phase's checkpoint asserts the tests are red now, naming the command
-and the expected failure as a `- [ ]` task. The extension surfaces those tasks
-in the panel at the phase pause, so that is the line the human reads before
-they go and run it. The fix phase's Verify flips them.
+**New code: outside-in, per component.** The old advice here was to write the
+bodies first and the tests after, because a test written against a moving
+signature teaches one that does not survive. The outside-in order fixes that:
+the signatures freeze before any test is typed. So each component, in one
+phase, goes:
 
-A bug fix is the case this works on: the defect exists, so the test that
-witnesses it compiles today. Order those first.
+1. **Types.** Its structs, enums, refusal types.
+2. **Public functions as shells that compile.** The real signature, a body
+   that answers without doing the work (rules below). Typed once; the
+   body steps replace only bodies.
+3. **The walkthrough test and the chosen edge tests, red.** The walkthrough is
+   linear, happy path, one call after another, so the human can step it in a
+   debugger. The edge tests are a subset: one per named refusal, plus the race
+   the component exists for. The rest of the table stays in the agent's own
+   test suite. Each test step carries `**Red:**` with the test names, and the
+   last red test's Why gives the command that shows them failing on an
+   assertion, so the human sees red before any body lands.
+4. **The caller view, read only.** A `**Action:** Read` step showing the code
+   that drives the component: the loop or the owner that calls it. The human
+   reads it and types nothing. Where no caller exists yet, the walkthrough is
+   written the way the owner will drive it, and there is no read step.
+5. **Bodies.** Each body step names the tests it turns green in
+   `**Green:**`. A private helper arrives inside the step that first needs it,
+   never ahead of the public surface.
 
-New code and refactors are usually not that case, and forcing them into it
-makes a worse guide. The shape is still moving — a test written against a
-signature the next phase rewrites teaches the human a signature that does not
-survive the session. Do not reach for the stub-the-signature, then test, then
-implement dance either. It replays as three passes over one function and the
-human loses the thread of what they are building. Order the tests after, say
-why in the test step's Why, and let the checkpoint check them green.
+All five are one phase, and the phase ends green. The checkpoint's first task
+is the test command, every test passing.
+
+**Shells use the language's own idiom.** A shell body is the marker every
+developer in that language already reads as "not written yet". No helper
+types, no sentinel values invented for the replay:
+
+| Language | Shell body |
+|---|---|
+| Rust | `todo!()` |
+| C# | `throw new NotImplementedException();` |
+| TypeScript / JavaScript | `throw new Error("not implemented");` |
+| Python | `raise NotImplementedError` |
+
+Each test runner reports a test against such a shell as failed with that
+message, which is the red the phase wants before its bodies land.
+
+**`**Shells:** no-throw`** on a phase is the exception, for code that bans
+panics or throws (a `no_std` core, a no-exceptions rule). There a shell body
+returns, in order of preference:
+
+1. The empty answer its type already has, when that answer is true for an
+   empty system: `None` or `null`, an empty collection, zero of a count.
+2. The nearest refusal the function already returns by name, when returning
+   it is honest. A real refusal (`Stale`, `Full`) that a test expects would let
+   the test pass against an empty shell, so never use one of those.
+3. Only when neither fits, a temporary `Unbuilt` variant on that function's
+   own error type, introduced with the type and named as temporary in its Why.
+   The body step that fills the last body removes it.
+
+The validator FAILs a no-throw component unit whose typed lines carry a
+not-implemented marker, and FAILs any guide that still names `Unbuilt` in a
+file after its last step. Without `no-throw` the markers are the right shell.
+
+A shell is a create step whose bytes differ from the sandbox (the sandbox
+holds only the finished body), so it carries
+its own `**After:**` fence with the shell body. The body step that fills
+it is an ordinary Modify, resolved from the dry-run target and the sandbox.
+
+**Refactors** follow the same order when they change a public surface: the new
+surface as shells beside the old, the tests moved to it, then the bodies.
 
 Topological sort within and across clusters. If you find a cycle, flag it for the human to resolve. Cycles in the dependency graph almost always indicate a missed abstraction.
+
+### 5b. Rulings by name
+
+The guide prints the calls behind a unit and the human rules them with the
+code in front of them: choices the agent made while building it, or entries in
+the project's decision log if it keeps one. A rule step:
+
+```markdown
+### Step 4.6: Rule on admit refusing when full
+
+**Action:** Rule
+**Decision:** cap-refusal
+**Options:** yes | no
+**Recommend:** yes
+
+**Why:** {The recap: the call in one line, who made it and when, what breaks
+without it, the code it touches as `path:line`. Plain words, no ids beyond the
+call's own.}
+```
+
+- `**Options:**` are the names the human picks from, separated by `|`: `yes |
+  no`, or variants `A | B` for a door with a small variant set. Two at least,
+  no repeats. `**Recommend:**` is optional and must be one of them; the picker
+  marks it and never preselects it.
+- An optional `**Shows:**` fence prints a few lines of code beside the recap.
+- The extension blocks on the pick and appends one JSON line to
+  `rulings.jsonl` in `.replay-record/` of the repo being replayed into (or in
+  `humanReplay.recordDir`), never the sandbox:
+  `{"decision","choice","options","recommended","guide","unit","step","at","by"}`.
+  `by` is the git user (else the OS user). A team replaying concurrently can
+  commit the record folder: the extension writes a `.gitattributes` there with
+  `*.jsonl merge=union`, so branches merge line by line without conflicts, and
+  a reader applies picks in `at` order, never file order.
+  `**Decision:**` is any short id: the project's own (`ADR-012`), or a slug
+  the guide makes up when the project keeps no log. The extension reads
+  nothing but the guide and writes nothing but that file. What a pick means
+  is the project's call: read the file back after the replay and record it
+  wherever the project keeps decisions, or nowhere.
+- Place a rule step after the code it rules on has landed, at the end of the
+  unit that typed it, or at the head of a closing unit's grill. Never mid-run
+  through a component: a pick needs the code on screen.
+- Only calls that change behaviour. Naming and tidy-up calls batch
+  elsewhere. More than a handful in one unit says the unit is too big.
+
+### 5c. Closing units
+
+A closing unit revisits a module the human already typed, once, from the
+lowest layer up. After it the human carries only the public surface.
+In this order:
+
+1. **Grill.** A rule step per call the module rests on that the human never
+   ruled: from the project's decision log if it keeps one, else the choices
+   the agent made building it. Then the edge cases it fails under, each as a
+   read step on the test that shows it. An edge case the human rejects becomes
+   a refusal by name or a documented limit, never something to remember. A
+   module with no open calls has a grill of read steps only.
+2. **Typed debt.** The module's pending changes as one delta: Modify and Patch
+   steps.
+3. **Walkthrough test**, linear and happy path, if the module lacks one.
+4. **Proofs or property tests** for the pure functions where the language has
+   them and they fit (Kani, proptest, FsCheck, Hypothesis).
+5. **Human layer.** A comment step per file: `**Action:** Comment`, the
+   `**File:**`, and a `**Shows:**` fence with the drafted stage table and race
+   notes. The human writes the comments and taste edits; the guide writes no
+   comment into the target. The extension opens the file, shows the table
+   beside it, and records whether the file changed when the human continues.
+6. **Contract page.** Public surface, invariants (each with the call behind it
+   where one exists), refusals,
+   the edge cases it guarantees. A read step on a page kept outside the
+   target, or a Markdown `Create File` when the project keeps contracts
+   in-tree.
+
+The validator FAILs a closing unit with no grill (a rule or read step before
+the first typed step), no comment step, a rule step after the first typed
+step, or a comment step before the last code step.
 
 ### 6. Write the guide
 
@@ -155,6 +320,10 @@ Manual bullet:
 - No LLM tics: no "The key insight:", no "It's important to note", no
   "delve/comprehensive/robust", no em dashes, no wrap-up sentences that restate
   the step. End blunt.
+- Step titles say what the step does, a verb and the thing: "Add the TooLong
+  refusal", "Read the caller: examples/sensor.rs". Never a teaser ("The edge it
+  mishandles quietly", "Your layer"): the title is what the tree, the picker
+  and the status bar show, and a riddle there costs the human a click.
 - Retrospectives are ONE probing question that forces reasoning about what was
   just built, not an essay and not a quiz with an obvious answer.
 - Every question carries its answer, and a step's retrospective carries two
@@ -194,7 +363,7 @@ Manual bullet:
 
 **Files affected:** {count}, across {N} layers.
 
-**Time estimate for replay:** ~{N}h. (Faster if you have full context. Slower the first time.)
+**Units:** {N} units of 30 to 60 minutes. (The extension records start and stop per unit in `unit-times.jsonl`, so the next estimate can use measured steps per hour.)
 
 **Key decisions:**
 
@@ -227,6 +396,8 @@ graph TD
 
 ## Phase {N}: {Cluster name}
 
+**Unit:** {component | closing | delta}
+**Module:** {path/to/module.rs, the one module this unit builds}
 **Layer:** {Data Models / Core Logic / API Surface / ...}
 **Domain:** {frontend / backend / database / ...}
 **Prerequisites:** {Phase X, Phase Y, or "none"}
@@ -236,7 +407,9 @@ graph TD
 
 **Symbol:** `{exact_function_name}`
 **File:** `path/to/file.rs:42`
-**Action:** Create | Modify | Delete | Create File | Patch
+**Action:** Create | Modify | Delete | Create File | Patch | Read | Comment | Rule
+**Red:** {test names this step leaves red, on a test step. Or omit.}
+**Green:** {test names this step turns green, on a body step. Or omit.}
 
 **Why:** {One or two sentences. Pull from the goal or your build memory when available. The human is reading this to understand the design, not to copy code.}
 
@@ -497,6 +670,20 @@ The rules that follow:
    sequential policy, and audits your answer keys. Fix every FAIL and re-run
    until it prints PASS. A guide that never met the validator is a guess.
 
+   After the steps it audits every phase as a unit:
+
+   ```
+   units (budget: 25 steps, 150 typed lines, 4 new types):
+     ok        Phase 1: Tail admit (component) — 21 steps, 88 typed lines, 3 new types
+     FAIL      Phase 2: Tail evict (component) — over budget: 31 steps (max 25). Split it
+     WARN      Phase 2: Tail evict — step 2.4 adds code after the red tests and names no test it turns green (`**Green:**`)
+     FAIL      Phase 3: Tail tests — tests only: tests land in the phase that adds the code they test
+   ```
+
+   A FAIL there fails the guide. WARNs are the order checks that have honest
+   exceptions (a contract with no caller yet, a red test greened by a later
+   guide); read each one and either fix it or know why it stands.
+
    The last line before the verdict is the answer-key count:
 
    ```
@@ -528,7 +715,22 @@ The rules that follow:
    bytes are exact) while destroying the comprehension gate. Byte-exact is the
    floor; the decomposition self-check in rule 5 is the ceiling. Run both.
 
-8. **A phase's `### CHECKPOINT:` block is parsed, and only its `- [ ]` lines are.**
+8. **Steps that type nothing.** Three actions pause the replay instead of
+   landing bytes. None of them is a Patch or a Manual bullet:
+
+   - `**Action:** Read`: code the human reads and does not type. `**File:**`
+     plus an optional `**Symbol:**` (no symbol shows the whole file). The
+     extension resolves it from the sandbox first, then the target, or shows
+     the step's own `**Shows:**` fence when the code lives in neither tree.
+     It opens read-only beside the editor; Continue moves on.
+   - `**Action:** Comment`: the human layer (§5c). `**File:**` is required;
+     the `**Shows:**` fence is the drafted stage table.
+   - `**Action:** Rule`: a ruling by name (§5b). No `**File:**`.
+
+   Give them `**Retrospective:** none`: the read, the comment and the pick are
+   the thinking point.
+
+9. **A phase's `### CHECKPOINT:` block is parsed, and only its `- [ ]` lines are.**
    The extension stops at every phase boundary already. The checkpoint is what that
    stop says: its task lines land in the Replay Guide panel and its first task lands
    in the toast, so write the one that matters first. Everything else in the block —
@@ -717,3 +919,4 @@ yet, and that is the signal to go back to the code.
 | `session/goal.md` (or equivalent), commit log | Input, optional. The captured intent. |
 | `session/session-state.md`, `session/progress.md`, `session/scraps.md` | NOT inputs. The trail records the journey; the guide teaches the destination. |
 | `session/replay-guide.md` | Output. The rebuild path. |
+| `rulings.jsonl`, `unit-times.jsonl` in the target's `.replay-record/` | Written by the extension during the replay: picks by name, unit start and stop. They live with the human's repo, not the sandbox, so they outlive it. |
